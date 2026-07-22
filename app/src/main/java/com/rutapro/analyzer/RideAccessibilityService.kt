@@ -32,6 +32,8 @@ class RideAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
+        // Respeta el boton iniciar/parar de la app.
+        if (!settings.running) return
         val pkg = event.packageName?.toString() ?: return
         if (!TARGET_PACKAGES.any { pkg.startsWith(it) }) return
 
