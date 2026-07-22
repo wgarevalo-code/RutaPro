@@ -94,6 +94,48 @@ class AppSettings(context: Context) {
     fun recordReject() { statTotal += 1; statReject += 1 }
     fun resetStats() { statTotal = 0; statAccept = 0; statReject = 0 }
 
+    // --- Tiempo en linea (para calcular la ganancia por hora REAL) ---
+
+    /** Arranca el cronometro de la jornada. */
+    fun startOnline() {
+        rollDayIfNeeded()
+        prefs.edit().putLong(KEY_ONLINE_START, System.currentTimeMillis()).apply()
+    }
+
+    /** Detiene el cronometro y acumula el tiempo trabajado. */
+    fun stopOnline() {
+        rollDayIfNeeded()
+        val start = prefs.getLong(KEY_ONLINE_START, 0L)
+        if (start > 0) {
+            val delta = (System.currentTimeMillis() - start) / 1000
+            prefs.edit()
+                .putLong(KEY_ONLINE_ACCUM, prefs.getLong(KEY_ONLINE_ACCUM, 0L) + delta)
+                .putLong(KEY_ONLINE_START, 0L)
+                .apply()
+        }
+    }
+
+    /** Segundos trabajados hoy, incluyendo la sesion en curso. */
+    fun onlineSecondsToday(): Long {
+        rollDayIfNeeded()
+        val accum = prefs.getLong(KEY_ONLINE_ACCUM, 0L)
+        val start = prefs.getLong(KEY_ONLINE_START, 0L)
+        val live = if (start > 0) (System.currentTimeMillis() - start) / 1000 else 0
+        return accum + live
+    }
+
+    /** Al cambiar de dia, el contador de horas arranca de cero. */
+    private fun rollDayIfNeeded() {
+        val today = com.rutapro.analyzer.data.Ledger.dayKey()
+        if (prefs.getString(KEY_ONLINE_DAY, "") != today) {
+            prefs.edit()
+                .putString(KEY_ONLINE_DAY, today)
+                .putLong(KEY_ONLINE_ACCUM, 0L)
+                .putLong(KEY_ONLINE_START, 0L)
+                .apply()
+        }
+    }
+
     /** Multiplicador de exigencia segun el modo turbo. */
     val demandFactor: Double
         get() = if (turboMode) 1.4 else 1.0
@@ -122,5 +164,8 @@ class AppSettings(context: Context) {
         private const val KEY_S_TOTAL = "s_total"
         private const val KEY_S_ACCEPT = "s_accept"
         private const val KEY_S_REJECT = "s_reject"
+        private const val KEY_ONLINE_START = "online_start"
+        private const val KEY_ONLINE_ACCUM = "online_accum"
+        private const val KEY_ONLINE_DAY = "online_day"
     }
 }

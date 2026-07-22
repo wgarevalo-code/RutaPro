@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:padding="16dp"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Billetera"
+            android:textColor="@color/textMain"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/periodLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Resumen de hoy"
+            android:textColor="@color/textMuted"
+            android:textSize="13sp"
+            android:paddingBottom="14dp" />
+
+        <!-- Periodo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView android:id="@+id/tabToday" style="@style/PeriodTab" android:text="Hoy" />
+            <TextView android:id="@+id/tabWeek" style="@style/PeriodTab" android:text="7 días"
+                android:layout_marginStart="8dp" />
+            <TextView android:id="@+id/tabMonth" style="@style/PeriodTab" android:text="30 días"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- Neto grande -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/card_hero"
+            android:padding="22dp"
+            android:layout_marginTop="14dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GANANCIA NETA"
+                android:textColor="@color/textMuted"
+                android:textSize="11sp"
+                android:letterSpacing="0.12" />
+            <TextView
+                android:id="@+id/netAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$0.00"
+                android:textColor="@color/green"
+                android:textSize="42sp"
+                android:textStyle="bold"
+                android:includeFontPadding="false"
+                android:paddingTop="6dp" />
+        </LinearLayout>
+
+        <!-- Ingresos / Gastos -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/card_bg"
+            android:padding="16dp"
+            android:layout_marginTop="12dp">
+            <LinearLayout style="@style/StatCol">
+                <TextView android:id="@+id/incomeAmount" style="@style/StatNum"
+                    android:textColor="@color/green" android:text="$0" android:textSize="22sp" />
+                <TextView style="@style/StatLabel" android:text="INGRESOS" />
+            </LinearLayout>
+            <LinearLayout style="@style/StatCol">
+                <TextView android:id="@+id/expenseAmount" style="@style/StatNum"
+                    android:textColor="@color/red" android:text="$0" android:textSize="22sp" />
+                <TextView style="@style/StatLabel" android:text="GASTOS" />
+            </LinearLayout>
+            <LinearLayout style="@style/StatCol">
+                <TextView android:id="@+id/ridesCount" style="@style/StatNum"
+                    android:textColor="@color/cyan" android:text="0" android:textSize="22sp" />
+                <TextView style="@style/StatLabel" android:text="CARRERAS" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Rendimiento real -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/card_bg"
+            android:padding="16dp"
+            android:layout_marginTop="12dp">
+            <LinearLayout style="@style/StatCol">
+                <TextView android:id="@+id/hoursOnline" style="@style/StatNum"
+                    android:textColor="@color/textMain" android:text="0h" android:textSize="22sp" />
+                <TextView style="@style/StatLabel" android:text="EN LÍNEA HOY" />
+            </LinearLayout>
+            <LinearLayout style="@style/StatCol">
+                <TextView android:id="@+id/realPerHour" style="@style/StatNum"
+                    android:textColor="@color/yellow" android:text="$0.00" android:textSize="22sp" />
+                <TextView style="@style/StatLabel" android:text="POR HORA REAL" />
+            </LinearLayout>
+            <LinearLayout style="@style/StatCol">
+                <TextView android:id="@+id/avgRide" style="@style/StatNum"
+                    android:textColor="@color/textMain" android:text="$0.00" android:textSize="22sp" />
+                <TextView style="@style/StatLabel" android:text="PROM. CARRERA" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Botones registrar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="14dp">
+            <TextView android:id="@+id/addFuel" style="@style/ActionBtn"
+                android:text="⛽ Gasolina" />
+            <TextView android:id="@+id/addExpense" style="@style/ActionBtn"
+                android:text="🔧 Gasto" android:layout_marginStart="8dp" />
+            <TextView android:id="@+id/addRide" style="@style/ActionBtn"
+                android:text="＋ Carrera" android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Movimientos"
+            android:textColor="@color/textMain"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:paddingTop="20dp"
+            android:paddingBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/entryList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/emptyLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Aún no hay movimientos. Cuando aceptes una carrera en la burbuja, aparecerá aquí."
+            android:textColor="@color/textMuted"
+            android:textSize="13sp"
+            android:paddingVertical="20dp"
+            android:gravity="center" />
+
+    </LinearLayout>
+</ScrollView>

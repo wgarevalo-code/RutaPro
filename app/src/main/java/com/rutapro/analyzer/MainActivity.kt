@@ -156,9 +156,11 @@ class MainActivity : AppCompatActivity() {
             }
             save()
             settings.running = true
+            settings.startOnline()
             startService(Intent(this, OverlayService::class.java))
         } else {
             settings.running = false
+            settings.stopOnline()
             stopService(Intent(this, OverlayService::class.java))
         }
         renderStartButton()
@@ -196,6 +198,7 @@ class MainActivity : AppCompatActivity() {
         nav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> scroll.post { scroll.fullScroll(ScrollView.FOCUS_UP) }
+                R.id.nav_wallet -> startActivity(Intent(this, WalletActivity::class.java))
                 R.id.nav_config -> scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
                 else -> Toast.makeText(this, "Próximamente", Toast.LENGTH_SHORT).show()
             }

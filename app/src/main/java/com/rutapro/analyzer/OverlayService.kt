@@ -34,10 +34,17 @@ class OverlayService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var root: View
     private lateinit var logo: ImageView
+    private lateinit var card: View
     private lateinit var result: TextView
+    private lateinit var btnTook: TextView
+    private lateinit var btnSkip: TextView
+    private lateinit var ledger: com.rutapro.analyzer.data.Ledger
     private lateinit var params: WindowManager.LayoutParams
     private val handler = Handler(Looper.getMainLooper())
-    private val hideDetail = Runnable { result.visibility = View.GONE }
+    private val hideDetail = Runnable { card.visibility = View.GONE }
+
+    /** Tarifa de la carrera que se esta mostrando, para registrarla si la toma. */
+    private var currentFare: Double = 0.0
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -52,7 +59,20 @@ class OverlayService : Service() {
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         root = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null)
         logo = root.findViewById(R.id.overlayLogo)
+        card = root.findViewById(R.id.overlayCard)
         result = root.findViewById(R.id.overlayResult)
+        btnTook = root.findViewById(R.id.btnTook)
+        btnSkip = root.findViewById(R.id.btnSkip)
+        ledger = com.rutapro.analyzer.data.Ledger(this)
+
+        btnTook.setOnClickListener {
+            if (currentFare > 0) {
+                ledger.add(com.rutapro.analyzer.data.EntryType.RIDE, currentFare, "Carrera Uber")
+                toast("Carrera registrada: " + money(currentFare))
+            }
+            card.visibility = View.GONE
+        }
+        btnSkip.setOnClickListener { card.visibility = View.GONE }
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -103,8 +123,8 @@ class OverlayService : Service() {
                     if (!moved) {
                         // Toque: alterna el detalle si hay algo que mostrar.
                         if (result.text.isNotBlank()) {
-                            result.visibility =
-                                if (result.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+                            card.visibility =
+                                if (card.visibility == View.VISIBLE) View.GONE else View.VISIBLE
                         }
                     }
                     true
@@ -117,13 +137,14 @@ class OverlayService : Service() {
     /** Llamado desde el servicio de accesibilidad cuando hay una oferta analizada. */
     fun showAnalysis(offer: RideOffer, analysis: Analysis) {
         handler.post {
+            currentFare = offer.fare
             val color = when (analysis.verdict) {
                 Verdict.GOOD -> Color.parseColor("#2BD576")
                 Verdict.FAIR -> Color.parseColor("#FFCC33")
                 Verdict.BAD -> Color.parseColor("#FF4D5E")
             }
             logo.background?.mutate()?.setTint(color)
-            (result.background?.mutate() as? android.graphics.drawable.GradientDrawable)
+            (card.background?.mutate() as? android.graphics.drawable.GradientDrawable)
                 ?.setStroke(dp(2), color)
             result.setTextColor(color)
             result.text = buildString {
@@ -131,13 +152,18 @@ class OverlayService : Service() {
                 append("Por hora  ").append(money(analysis.perHour)).append('\n')
                 append("Por km    ").append(money(analysis.perKm)).append('\n')
                 append("Recogida  ").append(fmtKm(offer.pickupKm)).append(" km\n")
+                append("Tarifa    ").append(money(offer.fare)).append('\n')
                 append(analysis.reason)
             }
-            result.visibility = View.VISIBLE
+            card.visibility = View.VISIBLE
             // Vuelve al logo solo despues de unos segundos.
             handler.removeCallbacks(hideDetail)
-            handler.postDelayed(hideDetail, 15000)
+            handler.postDelayed(hideDetail, 25000)
         }
+    }
+
+    private fun toast(msg: String) {
+        android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_SHORT).show()
     }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).roundToInt()
