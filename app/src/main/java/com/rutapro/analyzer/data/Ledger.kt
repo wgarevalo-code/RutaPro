@@ -15,12 +15,21 @@ object EntryType {
     const val EXPENSE = "EXPENSE" // otro gasto (lavado, mantenimiento, etc.)
 }
 
+/** Como se pago / se cobro. */
+object PayMethod {
+    const val CASH = "Efectivo"
+    const val CARD = "Tarjeta"
+    const val NONE = ""
+}
+
 data class LedgerEntry(
     val id: Long,
     val ts: Long,
     val type: String,
     val amount: Double,
-    val note: String
+    val note: String,
+    val category: String = "",
+    val method: String = ""
 ) {
     val isIncome: Boolean get() = type == EntryType.RIDE
 }
@@ -41,7 +50,13 @@ class Ledger(context: Context) {
 
     private val prefs = context.getSharedPreferences("ruta_pro_ledger", Context.MODE_PRIVATE)
 
-    fun add(type: String, amount: Double, note: String) {
+    fun add(
+        type: String,
+        amount: Double,
+        note: String,
+        category: String = "",
+        method: String = ""
+    ) {
         if (amount <= 0) return
         val arr = readArray()
         val o = JSONObject()
@@ -50,6 +65,8 @@ class Ledger(context: Context) {
             .put("type", type)
             .put("amount", amount)
             .put("note", note)
+            .put("category", category)
+            .put("method", method)
         arr.put(o)
         // Conserva los ultimos 2000 movimientos.
         val trimmed = if (arr.length() > 2000) {
@@ -81,7 +98,9 @@ class Ledger(context: Context) {
                     ts = o.optLong("ts"),
                     type = o.optString("type"),
                     amount = o.optDouble("amount", 0.0),
-                    note = o.optString("note")
+                    note = o.optString("note"),
+                    category = o.optString("category"),
+                    method = o.optString("method")
                 )
             )
         }

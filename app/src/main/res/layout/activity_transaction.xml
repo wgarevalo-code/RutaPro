@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:padding="16dp"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nueva transacción"
+            android:textColor="@color/textMain"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:paddingBottom="18dp" />
+
+        <TextView style="@style/SectionLabel" android:text="Tipo" />
+        <LinearLayout style="@style/PresetRow" android:paddingTop="6dp">
+            <TextView android:id="@+id/typeIncome" style="@style/Preset" android:text="↗  Ingreso" />
+            <TextView android:id="@+id/typeExpense" style="@style/Preset" android:text="↘  Gasto" />
+        </LinearLayout>
+
+        <TextView style="@style/SectionLabel" android:text="Valor" android:paddingTop="18dp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/inner_bg"
+            android:padding="16dp"
+            android:layout_marginTop="6dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$"
+                android:textColor="@color/green"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:paddingEnd="10dp" />
+            <EditText
+                android:id="@+id/amountInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:hint="0.00"
+                android:textColorHint="@color/textMuted"
+                android:textColor="@color/textMain"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:inputType="numberDecimal" />
+        </LinearLayout>
+
+        <TextView style="@style/SectionLabel" android:text="Categoría" android:paddingTop="18dp" />
+        <LinearLayout
+            android:id="@+id/categoryGrid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="6dp" />
+
+        <TextView style="@style/SectionLabel" android:text="Método de pago" android:paddingTop="18dp" />
+        <LinearLayout style="@style/PresetRow" android:paddingTop="6dp">
+            <TextView android:id="@+id/payCash" style="@style/Preset" android:text="💵  Efectivo" />
+            <TextView android:id="@+id/payCard" style="@style/Preset" android:text="💳  Tarjeta" />
+        </LinearLayout>
+
+        <TextView style="@style/SectionLabel" android:text="Descripción (opcional)" android:paddingTop="18dp" />
+        <EditText
+            android:id="@+id/noteInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/edit_bg"
+            android:hint="Agregar una nota…"
+            android:textColorHint="@color/textMuted"
+            android:textColor="@color/textMain"
+            android:textSize="15sp"
+            android:padding="14dp"
+            android:layout_marginTop="6dp"
+            android:inputType="text" />
+
+        <TextView android:id="@+id/saveTx"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:layout_marginBottom="8dp"
+            android:text="Guardar transacción"
+            android:gravity="center"
+            android:textColor="#0A0F1F"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:background="@drawable/btn_primary"
+            android:paddingVertical="16dp" />
+
+    </LinearLayout>
+</ScrollView>

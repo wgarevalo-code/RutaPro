@@ -6,4 +6,4 @@
     android:canRetrieveWindowContent="true"
     android:description="@string/accessibility_description"
     android:notificationTimeout="200"
-    android:packageNames="com.ubercab.driver,com.ubercab" />
+    android:packageNames="com.ubercab.driver,com.ubercab,sinet.startup.inDriver,sinet.startup.inDriver.driver" />

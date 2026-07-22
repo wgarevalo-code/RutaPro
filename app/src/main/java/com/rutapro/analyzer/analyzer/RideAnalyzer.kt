@@ -28,9 +28,7 @@ class RideAnalyzer(private val settings: AppSettings) {
         val totalKm = offer.tripKm + offer.pickupKm
         val totalMin = offer.tripMin + offer.pickupMin
 
-        val fuelCost = if (settings.kmPerGallon > 0) {
-            (totalKm / settings.kmPerGallon) * settings.fuelPricePerGallon
-        } else 0.0
+        val fuelCost = totalKm * settings.fuelCostPerKm
 
         val net = offer.fare - fuelCost
         val perKm = if (offer.tripKm > 0) net / offer.tripKm else 0.0

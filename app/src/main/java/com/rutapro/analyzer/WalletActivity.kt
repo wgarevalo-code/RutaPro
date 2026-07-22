@@ -2,9 +2,7 @@ package com.rutapro.analyzer
 
 import android.graphics.Color
 import android.os.Bundle
-import android.text.InputType
 import android.view.Gravity
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -65,21 +63,16 @@ class WalletActivity : AppCompatActivity() {
         tabWeek.setOnClickListener { period = 7; render() }
         tabMonth.setOnClickListener { period = 30; render() }
 
-        findViewById<TextView>(R.id.addFuel).setOnClickListener {
-            askAmount("Cargar gasolina", "Monto del tanqueo") { v ->
-                ledger.add(EntryType.FUEL, v, "Gasolina"); render()
-            }
-        }
-        findViewById<TextView>(R.id.addExpense).setOnClickListener {
-            askAmount("Otro gasto", "Lavado, mantenimiento, peaje…") { v ->
-                ledger.add(EntryType.EXPENSE, v, "Gasto"); render()
-            }
-        }
-        findViewById<TextView>(R.id.addRide).setOnClickListener {
-            askAmount("Carrera manual", "Lo que te pagaron") { v ->
-                ledger.add(EntryType.RIDE, v, "Carrera manual"); render()
-            }
-        }
+        findViewById<TextView>(R.id.addFuel).setOnClickListener { openTx(TransactionActivity.MODE_FUEL) }
+        findViewById<TextView>(R.id.addExpense).setOnClickListener { openTx(TransactionActivity.MODE_EXPENSE) }
+        findViewById<TextView>(R.id.addRide).setOnClickListener { openTx(TransactionActivity.MODE_INCOME) }
+    }
+
+    private fun openTx(mode: String) {
+        startActivity(
+            android.content.Intent(this, TransactionActivity::class.java)
+                .putExtra(TransactionActivity.EXTRA_MODE, mode)
+        )
     }
 
     override fun onResume() {
@@ -152,7 +145,11 @@ class WalletActivity : AppCompatActivity() {
                 textSize = 15f
             })
             left.addView(TextView(this).apply {
-                text = Ledger.timeLabel(e.ts)
+                text = buildString {
+                    append(Ledger.timeLabel(e.ts))
+                    if (e.category.isNotBlank()) append(" · ").append(e.category)
+                    if (e.method.isNotBlank()) append(" · ").append(e.method)
+                }
                 setTextColor(Color.parseColor("#8A96B5"))
                 textSize = 12f
             })
@@ -185,23 +182,6 @@ class WalletActivity : AppCompatActivity() {
         EntryType.RIDE -> if (e.note.isNotBlank()) e.note else "Carrera"
         EntryType.FUEL -> "Gasolina"
         else -> if (e.note.isNotBlank()) e.note else "Gasto"
-    }
-
-    private fun askAmount(title: String, hint: String, onOk: (Double) -> Unit) {
-        val input = EditText(this).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-            this.hint = hint
-            setPadding(dp(20), dp(16), dp(20), dp(16))
-        }
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setView(input)
-            .setPositiveButton("Guardar") { _, _ ->
-                val v = input.text.toString().trim().replace(',', '.').toDoubleOrNull()
-                if (v != null && v > 0) onOk(v)
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
     }
 
     private fun money(v: Double): String = String.format(Locale.US, "$%.2f", v)

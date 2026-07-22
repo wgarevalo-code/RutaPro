@@ -46,6 +46,9 @@ class OverlayService : Service() {
     /** Tarifa de la carrera que se esta mostrando, para registrarla si la toma. */
     private var currentFare: Double = 0.0
 
+    /** App de donde salio la carrera (Uber / inDrive), para la contabilidad. */
+    private var currentApp: String = "Uber"
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -67,7 +70,13 @@ class OverlayService : Service() {
 
         btnTook.setOnClickListener {
             if (currentFare > 0) {
-                ledger.add(com.rutapro.analyzer.data.EntryType.RIDE, currentFare, "Carrera Uber")
+                ledger.add(
+                    com.rutapro.analyzer.data.EntryType.RIDE,
+                    currentFare,
+                    "Carrera $currentApp",
+                    currentApp,
+                    ""
+                )
                 toast("Carrera registrada: " + money(currentFare))
             }
             card.visibility = View.GONE
@@ -135,9 +144,10 @@ class OverlayService : Service() {
     }
 
     /** Llamado desde el servicio de accesibilidad cuando hay una oferta analizada. */
-    fun showAnalysis(offer: RideOffer, analysis: Analysis) {
+    fun showAnalysis(offer: RideOffer, analysis: Analysis, sourceApp: String = "Uber") {
         handler.post {
             currentFare = offer.fare
+            currentApp = sourceApp
             val color = when (analysis.verdict) {
                 Verdict.GOOD -> Color.parseColor("#2BD576")
                 Verdict.FAIR -> Color.parseColor("#FFCC33")

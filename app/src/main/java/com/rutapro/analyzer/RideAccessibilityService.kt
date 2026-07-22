@@ -58,7 +58,7 @@ class RideAccessibilityService : AccessibilityService() {
             } else {
                 settings.recordAccept()
             }
-            OverlayService.instance?.showAnalysis(offer, analysis)
+            OverlayService.instance?.showAnalysis(offer, analysis, appNameFor(pkg))
         }
     }
 
@@ -75,7 +75,17 @@ class RideAccessibilityService : AccessibilityService() {
 
     companion object {
         private const val TAG = "RideA11y"
-        // Uber Driver y Uber pasajero. Agrega otros paquetes si hace falta.
-        private val TARGET_PACKAGES = listOf("com.ubercab.driver", "com.ubercab")
+        // Uber Driver, Uber e inDrive (conductor).
+        private val TARGET_PACKAGES = listOf(
+            "com.ubercab.driver",
+            "com.ubercab",
+            "sinet.startup.inDriver"
+        )
+
+        /** Nombre legible de la app de donde salio la carrera. */
+        fun appNameFor(pkg: String): String = when {
+            pkg.startsWith("sinet.startup.inDriver") -> "inDrive"
+            else -> "Uber"
+        }
     }
 }

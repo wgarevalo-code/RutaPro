@@ -19,8 +19,7 @@ class AppSettings(context: Context) {
                 .putFloat(KEY_MIN_PER_HOUR, DEF_HOUR)
                 .putFloat(KEY_MIN_PER_KM, DEF_KM)
                 .putFloat(KEY_MAX_PICKUP_KM, DEF_PICKUP)
-                .putFloat(KEY_FUEL_PRICE, DEF_FUEL)
-                .putFloat(KEY_KM_PER_GALLON, DEF_KMGAL)
+                .putFloat(KEY_FUEL_PER_KM, DEF_FUEL_KM)
                 .putInt(KEY_VERSION, PREFS_VERSION)
                 .apply()
         }
@@ -41,15 +40,13 @@ class AppSettings(context: Context) {
         get() = prefs.getFloat(KEY_MAX_PICKUP_KM, DEF_PICKUP).toDouble()
         set(v) = prefs.edit().putFloat(KEY_MAX_PICKUP_KM, v.toFloat()).apply()
 
-    /** Precio de la gasolina por galon. Ej: 2.40 */
-    var fuelPricePerGallon: Double
-        get() = prefs.getFloat(KEY_FUEL_PRICE, DEF_FUEL).toDouble()
-        set(v) = prefs.edit().putFloat(KEY_FUEL_PRICE, v.toFloat()).apply()
-
-    /** Rendimiento del vehiculo en km por galon. Ej: 40 */
-    var kmPerGallon: Double
-        get() = prefs.getFloat(KEY_KM_PER_GALLON, DEF_KMGAL).toDouble()
-        set(v) = prefs.edit().putFloat(KEY_KM_PER_GALLON, v.toFloat()).apply()
+    /**
+     * Costo de gasolina por kilometro. Un solo numero, sin tener que calcular
+     * rendimiento ni precio del galon. Ej: 0.06 (carro pequeno).
+     */
+    var fuelCostPerKm: Double
+        get() = prefs.getFloat(KEY_FUEL_PER_KM, DEF_FUEL_KM).toDouble()
+        set(v) = prefs.edit().putFloat(KEY_FUEL_PER_KM, v.toFloat()).apply()
 
     /**
      * Modo TURBO: sube las exigencias (x1.4) para que solo marque en verde
@@ -141,21 +138,19 @@ class AppSettings(context: Context) {
         get() = if (turboMode) 1.4 else 1.0
 
     companion object {
-        private const val PREFS_VERSION = 2
+        private const val PREFS_VERSION = 3
 
         // Valores por defecto en dolares.
         private const val DEF_HOUR = 10.0f
         private const val DEF_KM = 0.45f
         private const val DEF_PICKUP = 3.0f
-        private const val DEF_FUEL = 2.40f
-        private const val DEF_KMGAL = 40.0f
+        private const val DEF_FUEL_KM = 0.06f
 
         private const val KEY_VERSION = "prefs_version"
         private const val KEY_MIN_PER_KM = "min_per_km"
         private const val KEY_MIN_PER_HOUR = "min_per_hour"
         private const val KEY_MAX_PICKUP_KM = "max_pickup_km"
-        private const val KEY_FUEL_PRICE = "fuel_price"
-        private const val KEY_KM_PER_GALLON = "km_per_gallon"
+        private const val KEY_FUEL_PER_KM = "fuel_per_km"
         private const val KEY_TURBO = "turbo"
         private const val KEY_RUNNING = "running"
         private const val KEY_F_HOUR = "f_hour"
