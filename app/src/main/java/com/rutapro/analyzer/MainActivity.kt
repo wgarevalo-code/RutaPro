@@ -97,22 +97,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadValues() {
-        minPerHour.setText(settings.minPerHour.toInt().toString())
-        minPerKm.setText(settings.minPerKm.toInt().toString())
-        maxPickup.setText(settings.maxPickupKm.toString())
-        fuelPrice.setText(settings.fuelPricePerGallon.toInt().toString())
-        kmPerGallon.setText(settings.kmPerGallon.toInt().toString())
+        minPerHour.setText(dec(settings.minPerHour, 2))
+        minPerKm.setText(dec(settings.minPerKm, 2))
+        maxPickup.setText(dec(settings.maxPickupKm, 1))
+        fuelPrice.setText(dec(settings.fuelPricePerGallon, 2))
+        kmPerGallon.setText(dec(settings.kmPerGallon, 0))
         turboSwitch.isChecked = settings.turboMode
         renderFilters()
     }
 
     private fun save() {
-        settings.minPerHour = minPerHour.text.toString().toDoubleOrNull() ?: settings.minPerHour
-        settings.minPerKm = minPerKm.text.toString().toDoubleOrNull() ?: settings.minPerKm
-        settings.maxPickupKm = maxPickup.text.toString().toDoubleOrNull() ?: settings.maxPickupKm
-        settings.fuelPricePerGallon = fuelPrice.text.toString().toDoubleOrNull() ?: settings.fuelPricePerGallon
-        settings.kmPerGallon = kmPerGallon.text.toString().toDoubleOrNull() ?: settings.kmPerGallon
+        settings.minPerHour = num(minPerHour) ?: settings.minPerHour
+        settings.minPerKm = num(minPerKm) ?: settings.minPerKm
+        settings.maxPickupKm = num(maxPickup) ?: settings.maxPickupKm
+        settings.fuelPricePerGallon = num(fuelPrice) ?: settings.fuelPricePerGallon
+        settings.kmPerGallon = num(kmPerGallon) ?: settings.kmPerGallon
     }
+
+    /** Formatea siempre con punto decimal, sin importar el idioma del telefono. */
+    private fun dec(v: Double, decimals: Int): String =
+        String.format(java.util.Locale.US, "%.${decimals}f", v)
+
+    /** Lee un campo aceptando tanto coma como punto decimal. */
+    private fun num(field: EditText): Double? =
+        field.text.toString().trim().replace(',', '.').toDoubleOrNull()
 
     private fun renderFilters() {
         renderToggle(toggleHour, settings.filterHourOn)

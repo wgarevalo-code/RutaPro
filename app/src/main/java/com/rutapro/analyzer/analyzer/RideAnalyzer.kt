@@ -95,5 +95,5 @@ class RideAnalyzer(private val settings: AppSettings) {
     }
 
     private fun fmt(v: Double): String =
-        if (v >= 10) v.roundToInt().toString() else String.format("%.1f", v)
+        String.format(java.util.Locale.US, "%.1f", v)
 }

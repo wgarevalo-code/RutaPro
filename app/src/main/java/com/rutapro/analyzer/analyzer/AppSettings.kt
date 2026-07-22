@@ -4,36 +4,51 @@ import android.content.Context
 
 /**
  * Parametros del conductor, guardados en SharedPreferences.
- * Todos los valores por defecto estan pensados para Colombia (pesos, km, galones).
- * Ajustalos en la pantalla principal de la app.
+ * Todo se maneja en DOLARES con decimales (ej: 10.00 por hora, 0.45 por km),
+ * igual que las apps de conductor de la region.
  */
 class AppSettings(context: Context) {
 
     private val prefs = context.getSharedPreferences("ruta_pro", Context.MODE_PRIVATE)
 
-    /** Filtro por KM: tarifa minima aceptable por kilometro de viaje. */
-    var minPerKm: Double
-        get() = prefs.getFloat(KEY_MIN_PER_KM, 1500f).toDouble()
-        set(v) = prefs.edit().putFloat(KEY_MIN_PER_KM, v.toFloat()).apply()
+    init {
+        // Migracion: las primeras versiones guardaban valores en miles (pesos).
+        // Si venimos de ahi, reiniciamos a los valores por defecto en dolares.
+        if (prefs.getInt(KEY_VERSION, 1) < PREFS_VERSION) {
+            prefs.edit()
+                .putFloat(KEY_MIN_PER_HOUR, DEF_HOUR)
+                .putFloat(KEY_MIN_PER_KM, DEF_KM)
+                .putFloat(KEY_MAX_PICKUP_KM, DEF_PICKUP)
+                .putFloat(KEY_FUEL_PRICE, DEF_FUEL)
+                .putFloat(KEY_KM_PER_GALLON, DEF_KMGAL)
+                .putInt(KEY_VERSION, PREFS_VERSION)
+                .apply()
+        }
+    }
 
-    /** Filtro por hora: ganancia minima aceptable por hora de trabajo. */
+    /** Filtro Por hora: ganancia neta minima por hora de trabajo. Ej: 10.00 */
     var minPerHour: Double
-        get() = prefs.getFloat(KEY_MIN_PER_HOUR, 12000f).toDouble()
+        get() = prefs.getFloat(KEY_MIN_PER_HOUR, DEF_HOUR).toDouble()
         set(v) = prefs.edit().putFloat(KEY_MIN_PER_HOUR, v.toFloat()).apply()
 
-    /** Pick Up max: distancia maxima de recogida aceptable (km). Mas alla se rechaza. */
+    /** Filtro Por km: ganancia neta minima por km de viaje. Ej: 0.45 */
+    var minPerKm: Double
+        get() = prefs.getFloat(KEY_MIN_PER_KM, DEF_KM).toDouble()
+        set(v) = prefs.edit().putFloat(KEY_MIN_PER_KM, v.toFloat()).apply()
+
+    /** Filtro Pick Up max: distancia maxima de recogida (km). Ej: 3.0 */
     var maxPickupKm: Double
-        get() = prefs.getFloat(KEY_MAX_PICKUP_KM, 3f).toDouble()
+        get() = prefs.getFloat(KEY_MAX_PICKUP_KM, DEF_PICKUP).toDouble()
         set(v) = prefs.edit().putFloat(KEY_MAX_PICKUP_KM, v.toFloat()).apply()
 
-    /** Precio de la gasolina por galon. */
+    /** Precio de la gasolina por galon. Ej: 2.40 */
     var fuelPricePerGallon: Double
-        get() = prefs.getFloat(KEY_FUEL_PRICE, 16000f).toDouble()
+        get() = prefs.getFloat(KEY_FUEL_PRICE, DEF_FUEL).toDouble()
         set(v) = prefs.edit().putFloat(KEY_FUEL_PRICE, v.toFloat()).apply()
 
-    /** Rendimiento del vehiculo en km por galon. */
+    /** Rendimiento del vehiculo en km por galon. Ej: 40 */
     var kmPerGallon: Double
-        get() = prefs.getFloat(KEY_KM_PER_GALLON, 40f).toDouble()
+        get() = prefs.getFloat(KEY_KM_PER_GALLON, DEF_KMGAL).toDouble()
         set(v) = prefs.edit().putFloat(KEY_KM_PER_GALLON, v.toFloat()).apply()
 
     /**
@@ -84,6 +99,16 @@ class AppSettings(context: Context) {
         get() = if (turboMode) 1.4 else 1.0
 
     companion object {
+        private const val PREFS_VERSION = 2
+
+        // Valores por defecto en dolares.
+        private const val DEF_HOUR = 10.0f
+        private const val DEF_KM = 0.45f
+        private const val DEF_PICKUP = 3.0f
+        private const val DEF_FUEL = 2.40f
+        private const val DEF_KMGAL = 40.0f
+
+        private const val KEY_VERSION = "prefs_version"
         private const val KEY_MIN_PER_KM = "min_per_km"
         private const val KEY_MIN_PER_HOUR = "min_per_hour"
         private const val KEY_MAX_PICKUP_KM = "max_pickup_km"

@@ -128,9 +128,9 @@ class OverlayService : Service() {
             result.setTextColor(color)
             result.text = buildString {
                 append(analysis.headline).append('\n')
-                append("Por hora: ").append(money(analysis.perHour)).append('\n')
-                append("Por km: ").append(money(analysis.perKm)).append('\n')
-                append("Recogida: ").append(fmtKm(offer.pickupKm)).append(" km\n")
+                append("Por hora  ").append(money(analysis.perHour)).append('\n')
+                append("Por km    ").append(money(analysis.perKm)).append('\n')
+                append("Recogida  ").append(fmtKm(offer.pickupKm)).append(" km\n")
                 append(analysis.reason)
             }
             result.visibility = View.VISIBLE
@@ -141,9 +141,8 @@ class OverlayService : Service() {
     }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).roundToInt()
-    private fun money(v: Double): String = v.roundToInt().toString()
-    private fun fmtKm(v: Double): String =
-        if (v >= 10) v.roundToInt().toString() else String.format("%.1f", v)
+    private fun money(v: Double): String = String.format(java.util.Locale.US, "$%.2f", v)
+    private fun fmtKm(v: Double): String = String.format(java.util.Locale.US, "%.1f", v)
 
     private fun startForegroundNotification() {
         val channelId = "ruta_pro_overlay"
