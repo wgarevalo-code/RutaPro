@@ -43,13 +43,20 @@ class RideAnalyzer(private val settings: AppSettings) {
         val reqMin = settings.minPerMin * f
         val reqHour = settings.minPerHour * f
 
-        val meetsKm = perKm >= reqKm
-        val meetsMin = perMin >= reqMin
-        val meetsHour = perHour >= reqHour
-        val pickupTooFar = offer.pickupKm > settings.maxPickupKm
+        // Solo cuentan los filtros que el usuario tiene encendidos.
+        val enabledChecks = mutableListOf<Boolean>()
+        if (settings.filterHourOn) enabledChecks.add(perHour >= reqHour)
+        if (settings.filterKmOn) enabledChecks.add(perKm >= reqKm)
+        if (settings.filterMinOn) enabledChecks.add(perMin >= reqMin)
+
+        val meetsKm = !settings.filterKmOn || perKm >= reqKm
+        val meetsMin = !settings.filterMinOn || perMin >= reqMin
+        val meetsHour = !settings.filterHourOn || perHour >= reqHour
+        val pickupTooFar = settings.filterPickupOn && offer.pickupKm > settings.maxPickupKm
         val pickupHeavy = offer.tripKm > 0 && offer.pickupKm > offer.tripKm * 0.6
 
-        val passed = listOf(meetsKm, meetsMin, meetsHour).count { it }
+        val passed = enabledChecks.count { it }
+        val totalChecks = enabledChecks.size
 
         val verdict: Verdict
         val reason: String
@@ -62,13 +69,13 @@ class RideAnalyzer(private val settings: AppSettings) {
                 verdict = Verdict.BAD
                 reason = "Recogida muy lejos (${fmt(offer.pickupKm)} km)."
             }
-            passed == 0 -> {
+            totalChecks > 0 && passed == 0 -> {
                 verdict = Verdict.BAD
                 reason = "No pasa ningun filtro."
             }
-            passed == 3 && !pickupHeavy -> {
+            passed == totalChecks && !pickupHeavy -> {
                 verdict = Verdict.GOOD
-                reason = if (settings.turboMode) "Excelente (modo turbo)." else "Buen pago por km, minuto y hora."
+                reason = if (settings.turboMode) "Excelente (modo turbo)." else "Buen pago segun tus filtros."
             }
             else -> {
                 verdict = Verdict.FAIR

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_home" android:icon="@drawable/ic_home" android:title="Inicio" />
+    <item android:id="@+id/nav_wallet" android:icon="@drawable/ic_wallet" android:title="Billetera" />
+    <item android:id="@+id/nav_camera" android:icon="@drawable/ic_camera" android:title="Cámara" />
+    <item android:id="@+id/nav_config" android:icon="@drawable/ic_settings" android:title="Config" />
+    <item android:id="@+id/nav_support" android:icon="@drawable/ic_help" android:title="Soporte" />
+    <item android:id="@+id/nav_premium" android:icon="@drawable/ic_star" android:title="Premium" />
+</menu>

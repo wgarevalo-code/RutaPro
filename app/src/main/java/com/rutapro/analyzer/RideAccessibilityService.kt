@@ -53,6 +53,11 @@ class RideAccessibilityService : AccessibilityService() {
         val offer = UberParser.parse(text)
         if (offer != null && offer.isValid) {
             val analysis = analyzer.analyze(offer)
+            if (analysis.verdict == com.rutapro.analyzer.analyzer.Verdict.BAD) {
+                settings.recordReject()
+            } else {
+                settings.recordAccept()
+            }
             OverlayService.instance?.showAnalysis(offer, analysis)
         }
     }

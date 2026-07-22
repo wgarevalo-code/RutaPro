@@ -1,112 +1,336 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="20dp">
+    android:orientation="vertical"
+    android:background="@color/bg">
 
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="16dp"
+        android:clipToPadding="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Top bar -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="6dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:text="RutaPro"
+                    android:textColor="@color/cyan"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.02" />
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/ic_menu" />
+            </RelativeLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Panel de control"
+                android:textColor="@color/textMain"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:paddingTop="10dp" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Configura tus filtros y monitorea tus viajes"
+                    android:textColor="@color/textMuted"
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:text="🇨🇴 ▾"
+                    android:textColor="@color/textMain"
+                    android:textSize="14sp" />
+            </RelativeLayout>
+
+            <!-- Start card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="18dp"
+                android:layout_marginTop="16dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Uber"
+                        android:textColor="@color/textMuted"
+                        android:textSize="13sp"
+                        android:drawableEnd="@drawable/ic_arrow_white"
+                        android:drawablePadding="2dp" />
+                    <TextView
+                        android:id="@+id/statusPill"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="Listo para iniciar"
+                        android:textColor="@color/cyan"
+                        android:textSize="12sp"
+                        android:background="@drawable/pill_outline"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="6dp" />
+                </RelativeLayout>
+
+                <ImageButton
+                    android:id="@+id/startBtn"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="18dp"
+                    android:background="@drawable/circle_button"
+                    android:src="@drawable/ic_play"
+                    android:scaleType="center"
+                    android:contentDescription="Iniciar" />
+
+                <TextView
+                    android:id="@+id/startHint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="14dp"
+                    android:text="Toca para iniciar el análisis"
+                    android:textColor="@color/textMuted"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Stats -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginTop="12dp">
+                <LinearLayout style="@style/StatCol">
+                    <TextView android:id="@+id/statTotal" style="@style/StatNum"
+                        android:textColor="@color/cyan" android:text="0" />
+                    <TextView style="@style/StatLabel" android:text="Total" />
+                </LinearLayout>
+                <LinearLayout style="@style/StatCol">
+                    <TextView android:id="@+id/statAccept" style="@style/StatNum"
+                        android:textColor="@color/green" android:text="0" />
+                    <TextView style="@style/StatLabel" android:text="Aceptar" />
+                </LinearLayout>
+                <LinearLayout style="@style/StatCol">
+                    <TextView android:id="@+id/statReject" style="@style/StatNum"
+                        android:textColor="@color/red" android:text="0" />
+                    <TextView style="@style/StatLabel" android:text="Rechazar" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Filters -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginTop="12dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="12dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Filtros inteligentes"
+                        android:textColor="@color/textMain"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/filtersActive"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="3 activos"
+                        android:textColor="@color/cyan"
+                        android:textSize="12sp"
+                        android:background="@drawable/badge_bg"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp" />
+                </RelativeLayout>
+
+                <!-- Por hora -->
+                <LinearLayout style="@style/FilterRow">
+                    <ImageView style="@style/FilterIcon" android:src="@drawable/ic_timer" />
+                    <LinearLayout style="@style/FilterMid">
+                        <TextView style="@style/FilterLabel" android:text="Por hora" />
+                        <LinearLayout style="@style/FilterValueRow">
+                            <TextView style="@style/FilterCurr" android:text="$" />
+                            <EditText android:id="@+id/minPerHour" style="@style/FilterValue" />
+                        </LinearLayout>
+                    </LinearLayout>
+                    <TextView android:id="@+id/toggleHour" style="@style/FilterToggle" android:text="ON" />
+                </LinearLayout>
+
+                <!-- Por km -->
+                <LinearLayout style="@style/FilterRow">
+                    <ImageView style="@style/FilterIcon" android:src="@drawable/ic_trending" />
+                    <LinearLayout style="@style/FilterMid">
+                        <TextView style="@style/FilterLabel" android:text="Por km" />
+                        <LinearLayout style="@style/FilterValueRow">
+                            <TextView style="@style/FilterCurr" android:text="$" />
+                            <EditText android:id="@+id/minPerKm" style="@style/FilterValue" />
+                        </LinearLayout>
+                    </LinearLayout>
+                    <TextView android:id="@+id/toggleKm" style="@style/FilterToggle" android:text="ON" />
+                </LinearLayout>
+
+                <!-- Por minuto -->
+                <LinearLayout style="@style/FilterRow">
+                    <ImageView style="@style/FilterIcon" android:src="@drawable/ic_timer" />
+                    <LinearLayout style="@style/FilterMid">
+                        <TextView style="@style/FilterLabel" android:text="Por minuto" />
+                        <LinearLayout style="@style/FilterValueRow">
+                            <TextView style="@style/FilterCurr" android:text="$" />
+                            <EditText android:id="@+id/minPerMin" style="@style/FilterValue" />
+                        </LinearLayout>
+                    </LinearLayout>
+                    <TextView android:id="@+id/toggleMin" style="@style/FilterToggle" android:text="OFF" />
+                </LinearLayout>
+
+                <!-- Pickup max -->
+                <LinearLayout style="@style/FilterRow">
+                    <ImageView style="@style/FilterIcon" android:src="@drawable/ic_location" />
+                    <LinearLayout style="@style/FilterMid">
+                        <TextView style="@style/FilterLabel" android:text="Pickup máx." />
+                        <LinearLayout style="@style/FilterValueRow">
+                            <EditText android:id="@+id/maxPickup" style="@style/FilterValue" />
+                            <TextView style="@style/FilterCurr" android:text=" km" />
+                        </LinearLayout>
+                    </LinearLayout>
+                    <TextView android:id="@+id/togglePickup" style="@style/FilterToggle" android:text="ON" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Turbo -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginTop="12dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="⚡ Modo Turbo"
+                    android:textColor="@color/textMain"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/turboSwitch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- Vehiculo -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginTop="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mi vehículo"
+                    android:textColor="@color/textMain"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="10dp" />
+                <TextView style="@style/FieldLabel" android:text="Precio gasolina por galón" />
+                <EditText android:id="@+id/fuelPrice" style="@style/FieldInput" />
+                <TextView style="@style/FieldLabel" android:text="Rendimiento (km por galón)"
+                    android:paddingTop="10dp" />
+                <EditText android:id="@+id/kmPerGallon" style="@style/FieldInput" />
+            </LinearLayout>
+
+            <!-- Permisos -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginTop="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Permisos (solo la primera vez)"
+                    android:textColor="@color/textMain"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:paddingBottom="10dp" />
+                <Button android:id="@+id/overlayBtn" style="@style/GhostBtn"
+                    android:text="1. Permitir burbuja" />
+                <Button android:id="@+id/accessBtn" style="@style/GhostBtn"
+                    android:text="2. Activar accesibilidad"
+                    android:layout_marginTop="8dp" />
+                <TextView android:id="@+id/status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="12dp"
+                    android:textColor="@color/textMuted"
+                    android:textSize="13sp"
+                    android:text="Estado..." />
+            </LinearLayout>
+
+            <Button android:id="@+id/saveBtn"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="14dp"
+                android:layout_marginBottom="6dp"
+                android:text="Guardar cambios"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                android:backgroundTint="@color/cyan" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:background="@color/card"
+        app:menu="@menu/bottom_nav"
+        app:itemIconTint="@color/nav_tint"
+        app:itemTextColor="@color/nav_tint"
+        app:labelVisibilityMode="labeled" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Analiza tus carreras de Uber en pantalla."
-            android:paddingBottom="12dp" />
-
-        <Button
-            android:id="@+id/startStopBtn"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:text="▶ INICIAR"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF" />
-
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:background="#33000000" android:layout_marginVertical="16dp" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Filtros inteligentes" android:textSize="18sp"
-            android:textStyle="bold" android:paddingBottom="8dp" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Mínimo por HORA ($)" />
-        <EditText android:id="@+id/minPerHour" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:inputType="numberDecimal" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Mínimo por KM ($)" android:paddingTop="8dp" />
-        <EditText android:id="@+id/minPerKm" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:inputType="numberDecimal" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Mínimo por MINUTO ($)" android:paddingTop="8dp" />
-        <EditText android:id="@+id/minPerMin" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:inputType="numberDecimal" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Pick Up máx (km)" android:paddingTop="8dp" />
-        <EditText android:id="@+id/maxPickup" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:inputType="numberDecimal" />
-
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:paddingTop="12dp"
-            android:gravity="center_vertical">
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:textSize="16sp" android:textStyle="bold"
-                android:text="⚡ Modo TURBO (solo las mejores)" />
-            <Switch android:id="@+id/turboSwitch" android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:background="#33000000" android:layout_marginVertical="16dp" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Mi vehículo" android:textSize="18sp"
-            android:textStyle="bold" android:paddingBottom="8dp" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Precio gasolina por galón" />
-        <EditText android:id="@+id/fuelPrice" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:inputType="numberDecimal" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Rendimiento (km por galón)" android:paddingTop="8dp" />
-        <EditText android:id="@+id/kmPerGallon" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:inputType="numberDecimal" />
-
-        <Button android:id="@+id/saveBtn" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:text="Guardar filtros"
-            android:layout_marginTop="16dp" />
-
-        <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:background="#33000000" android:layout_marginVertical="16dp" />
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Permisos (solo la primera vez)" android:textSize="18sp"
-            android:textStyle="bold" android:paddingBottom="8dp" />
-
-        <Button android:id="@+id/overlayBtn" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:text="1. Permitir burbuja (overlay)" />
-
-        <Button android:id="@+id/accessBtn" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:text="2. Activar accesibilidad"
-            android:layout_marginTop="8dp" />
-
-        <TextView android:id="@+id/status" android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="16dp" android:textSize="16sp"
-            android:text="Estado..." />
-
-    </LinearLayout>
-</ScrollView>
+</LinearLayout>

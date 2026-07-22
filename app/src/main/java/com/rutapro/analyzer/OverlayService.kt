@@ -13,9 +13,11 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.widget.ImageView
 import android.widget.TextView
 import com.rutapro.analyzer.analyzer.Analysis
 import com.rutapro.analyzer.analyzer.RideOffer
@@ -23,15 +25,19 @@ import com.rutapro.analyzer.analyzer.Verdict
 import kotlin.math.roundToInt
 
 /**
- * Servicio en primer plano que dibuja una burbuja flotante encima de Uber con el resultado.
- * Es arrastrable y se puede tocar para ocultar/mostrar el detalle.
+ * Servicio en primer plano que dibuja UNA sola burbuja flotante: el logo de RutaPro.
+ * Al llegar una carrera, el logo se pinta del color del veredicto y se despliega una
+ * tarjeta con los numeros. Se puede arrastrar y tocar para ocultar/mostrar el detalle.
  */
 class OverlayService : Service() {
 
     private lateinit var windowManager: WindowManager
-    private lateinit var bubble: TextView
+    private lateinit var root: View
+    private lateinit var logo: ImageView
+    private lateinit var result: TextView
     private lateinit var params: WindowManager.LayoutParams
     private val handler = Handler(Looper.getMainLooper())
+    private val hideDetail = Runnable { result.visibility = View.GONE }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -44,14 +50,9 @@ class OverlayService : Service() {
 
     private fun addBubble() {
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-
-        bubble = TextView(this).apply {
-            text = "RutaPro\nlisto"
-            setTextColor(Color.WHITE)
-            textSize = 14f
-            setPadding(28, 18, 28, 18)
-            setBackgroundResource(R.drawable.overlay_background)
-        }
+        root = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null)
+        logo = root.findViewById(R.id.overlayLogo)
+        result = root.findViewById(R.id.overlayResult)
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -67,32 +68,45 @@ class OverlayService : Service() {
         ).apply {
             gravity = Gravity.TOP or Gravity.START
             x = 24
-            y = 240
+            y = 260
         }
 
-        enableDrag()
-        windowManager.addView(bubble, params)
+        enableDragAndTap()
+        windowManager.addView(root, params)
     }
 
     private var downX = 0
     private var downY = 0
     private var touchX = 0f
     private var touchY = 0f
+    private var moved = false
 
-    private fun enableDrag() {
-        bubble.setOnTouchListener { _, e ->
+    private fun enableDragAndTap() {
+        logo.setOnTouchListener { _, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    downX = params.x
-                    downY = params.y
-                    touchX = e.rawX
-                    touchY = e.rawY
+                    downX = params.x; downY = params.y
+                    touchX = e.rawX; touchY = e.rawY
+                    moved = false
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    params.x = downX + (e.rawX - touchX).roundToInt()
-                    params.y = downY + (e.rawY - touchY).roundToInt()
-                    windowManager.updateViewLayout(bubble, params)
+                    val dx = (e.rawX - touchX).roundToInt()
+                    val dy = (e.rawY - touchY).roundToInt()
+                    if (kotlin.math.abs(dx) > 8 || kotlin.math.abs(dy) > 8) moved = true
+                    params.x = downX + dx
+                    params.y = downY + dy
+                    windowManager.updateViewLayout(root, params)
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (!moved) {
+                        // Toque: alterna el detalle si hay algo que mostrar.
+                        if (result.text.isNotBlank()) {
+                            result.visibility =
+                                if (result.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+                        }
+                    }
                     true
                 }
                 else -> false
@@ -104,14 +118,15 @@ class OverlayService : Service() {
     fun showAnalysis(offer: RideOffer, analysis: Analysis) {
         handler.post {
             val color = when (analysis.verdict) {
-                Verdict.GOOD -> Color.parseColor("#1B8A3A")
-                Verdict.FAIR -> Color.parseColor("#B8860B")
-                Verdict.BAD -> Color.parseColor("#B00020")
+                Verdict.GOOD -> Color.parseColor("#2BD576")
+                Verdict.FAIR -> Color.parseColor("#FFCC33")
+                Verdict.BAD -> Color.parseColor("#FF4D5E")
             }
-            bubble.setBackgroundResource(R.drawable.overlay_background)
-            bubble.background?.setTint(color)
-
-            bubble.text = buildString {
+            logo.background?.mutate()?.setTint(color)
+            (result.background?.mutate() as? android.graphics.drawable.GradientDrawable)
+                ?.setStroke(dp(2), color)
+            result.setTextColor(color)
+            result.text = buildString {
                 append(analysis.headline).append('\n')
                 append("$/hora: ").append(money(analysis.perHour)).append('\n')
                 append("$/km: ").append(money(analysis.perKm)).append('\n')
@@ -119,9 +134,14 @@ class OverlayService : Service() {
                 append("Recogida: ").append(fmtKm(offer.pickupKm)).append(" km\n")
                 append(analysis.reason)
             }
+            result.visibility = View.VISIBLE
+            // Vuelve al logo solo despues de unos segundos.
+            handler.removeCallbacks(hideDetail)
+            handler.postDelayed(hideDetail, 15000)
         }
     }
 
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).roundToInt()
     private fun money(v: Double): String = v.roundToInt().toString()
     private fun fmtKm(v: Double): String =
         if (v >= 10) v.roundToInt().toString() else String.format("%.1f", v)
@@ -131,22 +151,27 @@ class OverlayService : Service() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelId, "RutaPro", NotificationManager.IMPORTANCE_LOW
+                channelId, "RutaPro", NotificationManager.IMPORTANCE_MIN
             )
             nm.createNotificationChannel(channel)
         }
-        val notification: Notification = Notification.Builder(this, channelId)
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            Notification.Builder(this, channelId)
+        else
+            @Suppress("DEPRECATION") Notification.Builder(this)
+        val notification = builder
             .setContentTitle("RutaPro activo")
-            .setContentText("Analizando carreras en pantalla")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentText("Analizando carreras")
+            .setSmallIcon(R.drawable.ic_arrow_white)
             .build()
         startForeground(1, notification)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (::bubble.isInitialized) {
-            try { windowManager.removeView(bubble) } catch (_: Exception) {}
+        handler.removeCallbacks(hideDetail)
+        if (::root.isInitialized) {
+            try { windowManager.removeView(root) } catch (_: Exception) {}
         }
         instance = null
     }

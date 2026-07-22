@@ -54,6 +54,39 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_RUNNING, false)
         set(v) = prefs.edit().putBoolean(KEY_RUNNING, v).apply()
 
+    // --- Interruptores ON/OFF de cada filtro ---
+    var filterHourOn: Boolean
+        get() = prefs.getBoolean(KEY_F_HOUR, true)
+        set(v) = prefs.edit().putBoolean(KEY_F_HOUR, v).apply()
+    var filterKmOn: Boolean
+        get() = prefs.getBoolean(KEY_F_KM, true)
+        set(v) = prefs.edit().putBoolean(KEY_F_KM, v).apply()
+    var filterMinOn: Boolean
+        get() = prefs.getBoolean(KEY_F_MIN, false)
+        set(v) = prefs.edit().putBoolean(KEY_F_MIN, v).apply()
+    var filterPickupOn: Boolean
+        get() = prefs.getBoolean(KEY_F_PICKUP, true)
+        set(v) = prefs.edit().putBoolean(KEY_F_PICKUP, v).apply()
+
+    /** Cuantos filtros estan activos (para el badge "N activos"). */
+    val activeFilterCount: Int
+        get() = listOf(filterHourOn, filterKmOn, filterMinOn, filterPickupOn).count { it }
+
+    // --- Contadores de estadisticas ---
+    var statTotal: Int
+        get() = prefs.getInt(KEY_S_TOTAL, 0)
+        set(v) = prefs.edit().putInt(KEY_S_TOTAL, v).apply()
+    var statAccept: Int
+        get() = prefs.getInt(KEY_S_ACCEPT, 0)
+        set(v) = prefs.edit().putInt(KEY_S_ACCEPT, v).apply()
+    var statReject: Int
+        get() = prefs.getInt(KEY_S_REJECT, 0)
+        set(v) = prefs.edit().putInt(KEY_S_REJECT, v).apply()
+
+    fun recordAccept() { statTotal += 1; statAccept += 1 }
+    fun recordReject() { statTotal += 1; statReject += 1 }
+    fun resetStats() { statTotal = 0; statAccept = 0; statReject = 0 }
+
     /** Multiplicador de exigencia segun el modo turbo. */
     val demandFactor: Double
         get() = if (turboMode) 1.4 else 1.0
@@ -67,5 +100,12 @@ class AppSettings(context: Context) {
         private const val KEY_KM_PER_GALLON = "km_per_gallon"
         private const val KEY_TURBO = "turbo"
         private const val KEY_RUNNING = "running"
+        private const val KEY_F_HOUR = "f_hour"
+        private const val KEY_F_KM = "f_km"
+        private const val KEY_F_MIN = "f_min"
+        private const val KEY_F_PICKUP = "f_pickup"
+        private const val KEY_S_TOTAL = "s_total"
+        private const val KEY_S_ACCEPT = "s_accept"
+        private const val KEY_S_REJECT = "s_reject"
     }
 }
