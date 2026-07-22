@@ -35,14 +35,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var minPerHour: EditText
     private lateinit var minPerKm: EditText
-    private lateinit var minPerMin: EditText
     private lateinit var maxPickup: EditText
     private lateinit var fuelPrice: EditText
     private lateinit var kmPerGallon: EditText
 
     private lateinit var toggleHour: TextView
     private lateinit var toggleKm: TextView
-    private lateinit var toggleMin: TextView
     private lateinit var togglePickup: TextView
     private lateinit var filtersActive: TextView
 
@@ -63,13 +61,11 @@ class MainActivity : AppCompatActivity() {
         statReject = findViewById(R.id.statReject)
         minPerHour = findViewById(R.id.minPerHour)
         minPerKm = findViewById(R.id.minPerKm)
-        minPerMin = findViewById(R.id.minPerMin)
         maxPickup = findViewById(R.id.maxPickup)
         fuelPrice = findViewById(R.id.fuelPrice)
         kmPerGallon = findViewById(R.id.kmPerGallon)
         toggleHour = findViewById(R.id.toggleHour)
         toggleKm = findViewById(R.id.toggleKm)
-        toggleMin = findViewById(R.id.toggleMin)
         togglePickup = findViewById(R.id.togglePickup)
         filtersActive = findViewById(R.id.filtersActive)
         turboSwitch = findViewById(R.id.turboSwitch)
@@ -84,7 +80,6 @@ class MainActivity : AppCompatActivity() {
 
         toggleHour.setOnClickListener { settings.filterHourOn = !settings.filterHourOn; renderFilters() }
         toggleKm.setOnClickListener { settings.filterKmOn = !settings.filterKmOn; renderFilters() }
-        toggleMin.setOnClickListener { settings.filterMinOn = !settings.filterMinOn; renderFilters() }
         togglePickup.setOnClickListener { settings.filterPickupOn = !settings.filterPickupOn; renderFilters() }
 
         turboSwitch.setOnCheckedChangeListener { _, c -> settings.turboMode = c }
@@ -104,7 +99,6 @@ class MainActivity : AppCompatActivity() {
     private fun loadValues() {
         minPerHour.setText(settings.minPerHour.toInt().toString())
         minPerKm.setText(settings.minPerKm.toInt().toString())
-        minPerMin.setText(settings.minPerMin.toInt().toString())
         maxPickup.setText(settings.maxPickupKm.toString())
         fuelPrice.setText(settings.fuelPricePerGallon.toInt().toString())
         kmPerGallon.setText(settings.kmPerGallon.toInt().toString())
@@ -115,7 +109,6 @@ class MainActivity : AppCompatActivity() {
     private fun save() {
         settings.minPerHour = minPerHour.text.toString().toDoubleOrNull() ?: settings.minPerHour
         settings.minPerKm = minPerKm.text.toString().toDoubleOrNull() ?: settings.minPerKm
-        settings.minPerMin = minPerMin.text.toString().toDoubleOrNull() ?: settings.minPerMin
         settings.maxPickupKm = maxPickup.text.toString().toDoubleOrNull() ?: settings.maxPickupKm
         settings.fuelPricePerGallon = fuelPrice.text.toString().toDoubleOrNull() ?: settings.fuelPricePerGallon
         settings.kmPerGallon = kmPerGallon.text.toString().toDoubleOrNull() ?: settings.kmPerGallon
@@ -124,7 +117,6 @@ class MainActivity : AppCompatActivity() {
     private fun renderFilters() {
         renderToggle(toggleHour, settings.filterHourOn)
         renderToggle(toggleKm, settings.filterKmOn)
-        renderToggle(toggleMin, settings.filterMinOn)
         renderToggle(togglePickup, settings.filterPickupOn)
         filtersActive.text = "${settings.activeFilterCount} activos"
     }

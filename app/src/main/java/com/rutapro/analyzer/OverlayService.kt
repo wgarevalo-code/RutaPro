@@ -128,9 +128,8 @@ class OverlayService : Service() {
             result.setTextColor(color)
             result.text = buildString {
                 append(analysis.headline).append('\n')
-                append("$/hora: ").append(money(analysis.perHour)).append('\n')
-                append("$/km: ").append(money(analysis.perKm)).append('\n')
-                append("$/min: ").append(money(analysis.perMin)).append('\n')
+                append("Por hora: ").append(money(analysis.perHour)).append('\n')
+                append("Por km: ").append(money(analysis.perKm)).append('\n')
                 append("Recogida: ").append(fmtKm(offer.pickupKm)).append(" km\n")
                 append(analysis.reason)
             }

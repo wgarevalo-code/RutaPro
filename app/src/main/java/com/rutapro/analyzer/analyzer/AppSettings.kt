@@ -16,11 +16,6 @@ class AppSettings(context: Context) {
         get() = prefs.getFloat(KEY_MIN_PER_KM, 1500f).toDouble()
         set(v) = prefs.edit().putFloat(KEY_MIN_PER_KM, v.toFloat()).apply()
 
-    /** Filtro por minuto: tarifa minima aceptable por minuto trabajado (recogida + viaje). */
-    var minPerMin: Double
-        get() = prefs.getFloat(KEY_MIN_PER_MIN, 200f).toDouble()
-        set(v) = prefs.edit().putFloat(KEY_MIN_PER_MIN, v.toFloat()).apply()
-
     /** Filtro por hora: ganancia minima aceptable por hora de trabajo. */
     var minPerHour: Double
         get() = prefs.getFloat(KEY_MIN_PER_HOUR, 12000f).toDouble()
@@ -61,16 +56,13 @@ class AppSettings(context: Context) {
     var filterKmOn: Boolean
         get() = prefs.getBoolean(KEY_F_KM, true)
         set(v) = prefs.edit().putBoolean(KEY_F_KM, v).apply()
-    var filterMinOn: Boolean
-        get() = prefs.getBoolean(KEY_F_MIN, false)
-        set(v) = prefs.edit().putBoolean(KEY_F_MIN, v).apply()
     var filterPickupOn: Boolean
         get() = prefs.getBoolean(KEY_F_PICKUP, true)
         set(v) = prefs.edit().putBoolean(KEY_F_PICKUP, v).apply()
 
     /** Cuantos filtros estan activos (para el badge "N activos"). */
     val activeFilterCount: Int
-        get() = listOf(filterHourOn, filterKmOn, filterMinOn, filterPickupOn).count { it }
+        get() = listOf(filterHourOn, filterKmOn, filterPickupOn).count { it }
 
     // --- Contadores de estadisticas ---
     var statTotal: Int
@@ -93,7 +85,6 @@ class AppSettings(context: Context) {
 
     companion object {
         private const val KEY_MIN_PER_KM = "min_per_km"
-        private const val KEY_MIN_PER_MIN = "min_per_min"
         private const val KEY_MIN_PER_HOUR = "min_per_hour"
         private const val KEY_MAX_PICKUP_KM = "max_pickup_km"
         private const val KEY_FUEL_PRICE = "fuel_price"
@@ -102,7 +93,6 @@ class AppSettings(context: Context) {
         private const val KEY_RUNNING = "running"
         private const val KEY_F_HOUR = "f_hour"
         private const val KEY_F_KM = "f_km"
-        private const val KEY_F_MIN = "f_min"
         private const val KEY_F_PICKUP = "f_pickup"
         private const val KEY_S_TOTAL = "s_total"
         private const val KEY_S_ACCEPT = "s_accept"

@@ -40,17 +40,14 @@ class RideAnalyzer(private val settings: AppSettings) {
         // Umbrales ajustados por el modo turbo.
         val f = settings.demandFactor
         val reqKm = settings.minPerKm * f
-        val reqMin = settings.minPerMin * f
         val reqHour = settings.minPerHour * f
 
         // Solo cuentan los filtros que el usuario tiene encendidos.
         val enabledChecks = mutableListOf<Boolean>()
         if (settings.filterHourOn) enabledChecks.add(perHour >= reqHour)
         if (settings.filterKmOn) enabledChecks.add(perKm >= reqKm)
-        if (settings.filterMinOn) enabledChecks.add(perMin >= reqMin)
 
         val meetsKm = !settings.filterKmOn || perKm >= reqKm
-        val meetsMin = !settings.filterMinOn || perMin >= reqMin
         val meetsHour = !settings.filterHourOn || perHour >= reqHour
         val pickupTooFar = settings.filterPickupOn && offer.pickupKm > settings.maxPickupKm
         val pickupHeavy = offer.tripKm > 0 && offer.pickupKm > offer.tripKm * 0.6
@@ -83,7 +80,7 @@ class RideAnalyzer(private val settings: AppSettings) {
                     pickupHeavy -> "Recogida larga para el viaje."
                     !meetsHour -> "Floja por hora."
                     !meetsKm -> "Justa por km."
-                    else -> "Justa por minuto."
+                    else -> "Justa, en el limite."
                 }
             }
         }
