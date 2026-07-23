@@ -33,13 +33,33 @@ data class LedgerEntry(
     /** Solo para tanqueos: lectura del odometro en km. */
     val odometer: Double = 0.0,
     /** Solo para tanqueos: precio por galon del dia. */
-    val pricePerGallon: Double = 0.0
+    val pricePerGallon: Double = 0.0,
+    /** Donde apareció la carrera (0 = sin ubicacion). */
+    val lat: Double = 0.0,
+    val lng: Double = 0.0
 ) {
+    val hasLocation: Boolean get() = lat != 0.0 || lng != 0.0
+
+    /** Hora del dia (0-23) en que ocurrio, para las estadisticas. */
+    val hourOfDay: Int
+        get() = Calendar.getInstance().apply { timeInMillis = ts }.get(Calendar.HOUR_OF_DAY)
+
     val isIncome: Boolean get() = type == EntryType.RIDE
 
     /** Galones cargados, deducidos del monto y el precio. */
     val gallons: Double
         get() = if (pricePerGallon > 0) amount / pricePerGallon else 0.0
+}
+
+/** Cuanto se gana en una franja horaria. */
+data class HourStat(val hour: Int, val rides: Int, val total: Double) {
+    val avg: Double get() = if (rides > 0) total / rides else 0.0
+    val label: String get() = String.format(Locale.US, "%02d:00 – %02d:00", hour, (hour + 1) % 24)
+}
+
+/** Cuanto se gana en una zona. */
+data class ZoneStat(val lat: Double, val lng: Double, val rides: Int, val total: Double) {
+    val avg: Double get() = if (rides > 0) total / rides else 0.0
 }
 
 /** Resultado del calculo de rendimiento real entre dos tanqueos. */
@@ -73,7 +93,9 @@ class Ledger(context: Context) {
         category: String = "",
         method: String = "",
         odometer: Double = 0.0,
-        pricePerGallon: Double = 0.0
+        pricePerGallon: Double = 0.0,
+        lat: Double = 0.0,
+        lng: Double = 0.0
     ) {
         if (amount <= 0) return
         val arr = readArray()
@@ -87,6 +109,8 @@ class Ledger(context: Context) {
             .put("method", method)
             .put("odometer", odometer)
             .put("ppg", pricePerGallon)
+            .put("lat", lat)
+            .put("lng", lng)
         arr.put(o)
         // Conserva los ultimos 2000 movimientos.
         val trimmed = if (arr.length() > 2000) {
@@ -122,7 +146,9 @@ class Ledger(context: Context) {
                     category = o.optString("category"),
                     method = o.optString("method"),
                     odometer = o.optDouble("odometer", 0.0),
-                    pricePerGallon = o.optDouble("ppg", 0.0)
+                    pricePerGallon = o.optDouble("ppg", 0.0),
+                    lat = o.optDouble("lat", 0.0),
+                    lng = o.optDouble("lng", 0.0)
                 )
             )
         }
@@ -178,6 +204,43 @@ class Ledger(context: Context) {
         val kmPerGallon = kmDriven / gallons
         val costPerKm = last.pricePerGallon / kmPerGallon
         return FuelEfficiency(kmDriven, gallons, kmPerGallon, costPerKm)
+    }
+
+    /**
+     * Mejores horas del dia: cuanto ganaste en promedio por carrera en cada franja,
+     * usando todo el historial. Devuelve la lista ordenada de mejor a peor.
+     */
+    fun bestHours(minRides: Int = 2): List<HourStat> =
+        all().filter { it.isIncome }
+            .groupBy { it.hourOfDay }
+            .filter { it.value.size >= minRides }
+            .map { (hour, list) ->
+                HourStat(hour, list.size, list.sumOf { it.amount })
+            }
+            .sortedByDescending { it.total }
+
+    /**
+     * Mejores zonas: agrupa las carreras por celdas de ~550 m y devuelve
+     * las que mas dinero han dejado.
+     */
+    fun bestZones(): List<ZoneStat> =
+        all().filter { it.isIncome && it.hasLocation }
+            .groupBy { zoneKey(it.lat, it.lng) }
+            .map { (_, list) ->
+                ZoneStat(
+                    lat = list.map { it.lat }.average(),
+                    lng = list.map { it.lng }.average(),
+                    rides = list.size,
+                    total = list.sumOf { it.amount }
+                )
+            }
+            .sortedByDescending { it.total }
+
+    private fun zoneKey(lat: Double, lng: Double): String {
+        // 0.005 grados ~ 550 m: suficiente para distinguir barrios.
+        val la = Math.round(lat / 0.005) * 0.005
+        val ln = Math.round(lng / 0.005) * 0.005
+        return "$la,$ln"
     }
 
     /** El ultimo tanqueo registrado (para mostrar el odometro anterior). */

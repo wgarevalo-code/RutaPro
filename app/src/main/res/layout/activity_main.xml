@@ -339,20 +339,23 @@
                     android:textSize="17sp"
                     android:textStyle="bold" />
                 <TextView style="@style/FilterDesc"
-                    android:text="Estos dos permisos son necesarios para que RutaPro pueda leer las carreras y mostrarte la burbuja."
+                    android:text="RutaPro ya no usa accesibilidad. Lee la pantalla por captura, y el permiso te lo pide Android al darle iniciar."
                     android:paddingTop="6dp"
                     android:paddingBottom="12dp" />
 
                 <TextView android:id="@+id/overlayBtn" style="@style/PermBtn"
-                    android:text="Permitir burbuja flotante" />
+                    android:text="Permitir ventana flotante" />
                 <TextView android:id="@+id/overlayState" style="@style/PermState"
                     android:text="Sin conceder" />
 
-                <TextView android:id="@+id/accessBtn" style="@style/PermBtn"
-                    android:text="Activar accesibilidad"
+                <TextView android:id="@+id/locationBtn" style="@style/PermBtn"
+                    android:text="Permitir ubicación"
                     android:layout_marginTop="12dp" />
-                <TextView android:id="@+id/accessState" style="@style/PermState"
+                <TextView android:id="@+id/locationState" style="@style/PermState"
                     android:text="Sin conceder" />
+                <TextView style="@style/FilterDesc"
+                    android:text="La ubicación es opcional: sirve para contarte los km del día y tus mejores zonas."
+                    android:paddingTop="6dp" />
             </LinearLayout>
 
             <TextView android:id="@+id/saveBtn"

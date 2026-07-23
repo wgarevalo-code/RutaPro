@@ -1,24 +1,31 @@
 package com.rutapro.analyzer
 
+import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.media.projection.MediaProjectionManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.text.TextUtils
 import android.view.View
-import android.view.accessibility.AccessibilityManager
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.rutapro.analyzer.analyzer.AppSettings
+import com.rutapro.analyzer.capture.ScreenCaptureService
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -47,7 +54,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var filtersActive: TextView
 
     private lateinit var overlayState: TextView
-    private lateinit var accessState: TextView
+    private lateinit var locationState: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         turboState = findViewById(R.id.turboState)
         filtersActive = findViewById(R.id.filtersActive)
         overlayState = findViewById(R.id.overlayState)
-        accessState = findViewById(R.id.accessState)
+        locationState = findViewById(R.id.locationState)
 
         loadValues()
         setupExpanders()
@@ -83,7 +90,7 @@ class MainActivity : AppCompatActivity() {
             save(); Toast.makeText(this, "Cambios guardados", Toast.LENGTH_SHORT).show()
         }
         findViewById<TextView>(R.id.overlayBtn).setOnClickListener { requestOverlay() }
-        findViewById<TextView>(R.id.accessBtn).setOnClickListener { openAccessibilitySettings() }
+        findViewById<TextView>(R.id.locationBtn).setOnClickListener { requestLocation() }
 
         toggleHour.setOnClickListener { settings.filterHourOn = !settings.filterHourOn; renderFilters() }
         toggleKm.setOnClickListener { settings.filterKmOn = !settings.filterKmOn; renderFilters() }
@@ -91,9 +98,9 @@ class MainActivity : AppCompatActivity() {
         toggleTurbo.setOnClickListener { settings.turboMode = !settings.turboMode; renderFilters() }
 
         findViewById<TextView>(R.id.resetStats).setOnClickListener {
-            androidx.appcompat.app.AlertDialog.Builder(this)
+            AlertDialog.Builder(this)
                 .setTitle("Reiniciar contadores")
-                .setMessage("Los contadores de Total, Aceptar y Rechazar vuelven a cero. Tu billetera no se toca.")
+                .setMessage("Total, Aceptar y Rechazar vuelven a cero. Tu billetera no se toca.")
                 .setPositiveButton("Reiniciar") { _, _ ->
                     settings.resetStats(); renderStats()
                     Toast.makeText(this, "Contadores en cero", Toast.LENGTH_SHORT).show()
@@ -112,7 +119,74 @@ class MainActivity : AppCompatActivity() {
         updateStatus()
     }
 
-    /** Cada filtro se despliega para mostrar su explicacion. */
+    // ---------- Iniciar / parar ----------
+
+    private fun toggleRunning() {
+        if (settings.running) {
+            settings.running = false
+            settings.stopOnline()
+            stopService(Intent(this, ScreenCaptureService::class.java))
+            stopService(Intent(this, OverlayService::class.java))
+            renderStartButton()
+            return
+        }
+
+        if (!Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, "Primero permite la ventana flotante (abajo).", Toast.LENGTH_LONG).show()
+            scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
+            return
+        }
+
+        save()
+        // Android pide autorizacion para leer la pantalla en cada jornada.
+        val mpm = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        try {
+            startActivityForResult(mpm.createScreenCaptureIntent(), REQ_CAPTURE)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Tu teléfono no permite la captura de pantalla.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    @Deprecated("Compatibilidad con la API de captura")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION")
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQ_CAPTURE) return
+
+        if (resultCode != Activity.RESULT_OK || data == null) {
+            Toast.makeText(this, "Sin permiso de pantalla no puedo leer las carreras.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        settings.running = true
+        settings.startOnline()
+
+        startService(Intent(this, OverlayService::class.java))
+        startService(
+            Intent(this, ScreenCaptureService::class.java)
+                .putExtra(ScreenCaptureService.EXTRA_RESULT_CODE, resultCode)
+                .putExtra(ScreenCaptureService.EXTRA_DATA, data)
+        )
+        renderStartButton()
+        Toast.makeText(this, "Listo. Abre Uber o inDrive.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun renderStartButton() {
+        if (settings.running) {
+            startBtn.setImageResource(R.drawable.ic_stop)
+            startBtn.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FF4D5E"))
+            statusPill.text = "Analizando…"
+            startHint.text = "Toca para detener el análisis"
+        } else {
+            startBtn.setImageResource(R.drawable.ic_play)
+            startBtn.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#22C7E0"))
+            statusPill.text = "Listo para iniciar"
+            startHint.text = "Toca para iniciar el análisis"
+        }
+    }
+
+    // ---------- Filtros ----------
+
     private fun setupExpanders() {
         expander(R.id.hourHeader, R.id.hourPanel, R.id.hourChevron)
         expander(R.id.kmHeader, R.id.kmPanel, R.id.kmChevron)
@@ -131,21 +205,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Botones de valores rapidos para no tener que escribir. */
     private fun setupPresets() {
         preset(R.id.hourP1, minPerHour, 8.0, 2)
         preset(R.id.hourP2, minPerHour, 10.0, 2)
         preset(R.id.hourP3, minPerHour, 15.0, 2)
-
         preset(R.id.kmP1, minPerKm, 0.35, 2)
         preset(R.id.kmP2, minPerKm, 0.45, 2)
         preset(R.id.kmP3, minPerKm, 0.60, 2)
-
         preset(R.id.pickP1, maxPickup, 2.0, 1)
         preset(R.id.pickP2, maxPickup, 3.0, 1)
         preset(R.id.pickP3, maxPickup, 5.0, 1)
-
-        // Costo de gasolina tipico por tipo de vehiculo.
         preset(R.id.fuelP1, fuelPerKm, 0.03, 2)
         preset(R.id.fuelP2, fuelPerKm, 0.06, 2)
         preset(R.id.fuelP3, fuelPerKm, 0.10, 2)
@@ -207,38 +276,7 @@ class MainActivity : AppCompatActivity() {
         statReject.text = settings.statReject.toString()
     }
 
-    private fun toggleRunning() {
-        if (!settings.running) {
-            if (!Settings.canDrawOverlays(this) || !isAccessibilityEnabled()) {
-                Toast.makeText(this, "Falta conceder los permisos de abajo.", Toast.LENGTH_LONG).show()
-                scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
-                return
-            }
-            save()
-            settings.running = true
-            settings.startOnline()
-            startService(Intent(this, OverlayService::class.java))
-        } else {
-            settings.running = false
-            settings.stopOnline()
-            stopService(Intent(this, OverlayService::class.java))
-        }
-        renderStartButton()
-    }
-
-    private fun renderStartButton() {
-        if (settings.running) {
-            startBtn.setImageResource(R.drawable.ic_stop)
-            startBtn.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FF4D5E"))
-            statusPill.text = "Analizando…"
-            startHint.text = "Toca para detener el análisis"
-        } else {
-            startBtn.setImageResource(R.drawable.ic_play)
-            startBtn.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#22C7E0"))
-            statusPill.text = "Listo para iniciar"
-            startHint.text = "Toca para iniciar el análisis"
-        }
-    }
+    // ---------- Permisos ----------
 
     private fun requestOverlay() {
         if (!Settings.canDrawOverlays(this)) {
@@ -248,28 +286,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun openAccessibilitySettings() {
-        Toast.makeText(this, "Busca RutaPro en la lista y actívalo", Toast.LENGTH_LONG).show()
-        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+    private fun requestLocation() {
+        if (hasLocation()) {
+            Toast.makeText(this, "Ya está concedido", Toast.LENGTH_SHORT).show()
+            return
+        }
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+            REQ_LOCATION
+        )
     }
 
-    private fun setupBottomNav() {
-        val nav = findViewById<BottomNavigationView>(R.id.bottomNav)
-        nav.selectedItemId = R.id.nav_home
-        nav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> scroll.post { scroll.fullScroll(ScrollView.FOCUS_UP) }
-                R.id.nav_wallet -> startActivity(Intent(this, WalletActivity::class.java))
-                R.id.nav_config -> scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
-                else -> Toast.makeText(this, "Próximamente", Toast.LENGTH_SHORT).show()
-            }
-            true
-        }
+    private fun hasLocation(): Boolean =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        updateStatus()
     }
 
     private fun updateStatus() {
         renderPerm(overlayState, Settings.canDrawOverlays(this))
-        renderPerm(accessState, isAccessibilityEnabled())
+        renderPerm(locationState, hasLocation())
     }
 
     private fun renderPerm(view: TextView, granted: Boolean) {
@@ -282,18 +326,41 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun isAccessibilityEnabled(): Boolean {
-        val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        if (!am.isEnabled) return false
-        val expected = "$packageName/${RideAccessibilityService::class.java.name}"
-        val enabled = Settings.Secure.getString(
-            contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-        val splitter = TextUtils.SimpleStringSplitter(':')
-        splitter.setString(enabled)
-        while (splitter.hasNext()) {
-            if (splitter.next().equals(expected, ignoreCase = true)) return true
+    // ---------- Navegación ----------
+
+    private fun setupBottomNav() {
+        val nav = findViewById<BottomNavigationView>(R.id.bottomNav)
+        nav.selectedItemId = R.id.nav_home
+        nav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> scroll.post { scroll.fullScroll(ScrollView.FOCUS_UP) }
+                R.id.nav_wallet -> startActivity(Intent(this, WalletActivity::class.java))
+                R.id.nav_stats -> startActivity(Intent(this, StatsActivity::class.java))
+                R.id.nav_config -> scroll.post { scroll.fullScroll(ScrollView.FOCUS_DOWN) }
+                R.id.nav_help -> showHelp()
+            }
+            true
         }
-        return false
+    }
+
+    private fun showHelp() {
+        AlertDialog.Builder(this)
+            .setTitle("Cómo funciona RutaPro")
+            .setMessage(
+                "1. Configura tus filtros y el costo de gasolina.\n\n" +
+                    "2. Toca el botón ▶. Android te pedirá autorización para leer la pantalla: " +
+                    "acepta y abre Uber o inDrive.\n\n" +
+                    "3. Cuando entre una carrera, aparece arriba un cuadro con el veredicto. " +
+                    "Si la tomas, toca ✓ Sí y queda en tu billetera.\n\n" +
+                    "4. Al terminar la jornada toca ⏹ para que el cálculo de ganancia por hora sea exacto.\n\n" +
+                    "Todo se procesa dentro de tu teléfono. Nada se envía a internet."
+            )
+            .setPositiveButton("Entendido", null)
+            .show()
+    }
+
+    companion object {
+        private const val REQ_CAPTURE = 1001
+        private const val REQ_LOCATION = 1002
     }
 }

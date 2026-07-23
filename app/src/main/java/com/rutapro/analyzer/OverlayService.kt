@@ -81,7 +81,12 @@ class OverlayService : Service() {
 
             view.findViewById<TextView>(R.id.btnTook).setOnClickListener {
                 if (currentFare > 0) {
-                    ledger.add(EntryType.RIDE, currentFare, "Carrera $currentApp", currentApp, "")
+                    // Guarda tambien donde apareció, para el mapa de mejores zonas.
+                    val pos = com.rutapro.analyzer.location.LocationTracker.lastPosition(this)
+                    ledger.add(
+                        EntryType.RIDE, currentFare, "Carrera $currentApp", currentApp, "",
+                        0.0, 0.0, pos?.first ?: 0.0, pos?.second ?: 0.0
+                    )
                     toast("Carrera registrada: " + money(currentFare))
                 }
                 removePopup()

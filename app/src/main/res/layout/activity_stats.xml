@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:padding="16dp"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Estadísticas"
+            android:textColor="@color/textMain"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dónde y cuándo ganas más"
+            android:textColor="@color/textMuted"
+            android:textSize="13sp"
+            android:paddingBottom="14dp" />
+
+        <!-- Km recorridos -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/card_bg"
+            android:padding="16dp">
+            <LinearLayout style="@style/StatCol">
+                <TextView android:id="@+id/kmToday" style="@style/StatNum"
+                    android:textColor="@color/cyan" android:text="0" android:textSize="24sp" />
+                <TextView style="@style/StatLabel" android:text="KM HOY" />
+            </LinearLayout>
+            <LinearLayout style="@style/StatCol">
+                <TextView android:id="@+id/paidKm" style="@style/StatNum"
+                    android:textColor="@color/green" android:text="0" android:textSize="24sp" />
+                <TextView style="@style/StatLabel" android:text="CARRERAS HOY" />
+            </LinearLayout>
+            <LinearLayout style="@style/StatCol">
+                <TextView android:id="@+id/perKmToday" style="@style/StatNum"
+                    android:textColor="@color/yellow" android:text="$0.00" android:textSize="24sp" />
+                <TextView style="@style/StatLabel" android:text="GANAS POR KM" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView android:id="@+id/locationWarn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/yellow"
+            android:textSize="12sp"
+            android:paddingTop="8dp"
+            android:visibility="gone" />
+
+        <!-- Mejores horas -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🕐 Tus mejores horas"
+            android:textColor="@color/textMain"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:paddingTop="22dp"
+            android:paddingBottom="4dp" />
+        <TextView style="@style/FilterDesc"
+            android:text="Las franjas donde más plata has hecho. Sal a trabajar en estas."
+            android:paddingBottom="10dp" />
+        <LinearLayout
+            android:id="@+id/hoursList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <!-- Mejores zonas -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📍 Tus mejores zonas"
+            android:textColor="@color/textMain"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:paddingTop="22dp"
+            android:paddingBottom="4dp" />
+        <TextView style="@style/FilterDesc"
+            android:text="Dónde estabas cuando entraron las mejores carreras."
+            android:paddingBottom="10dp" />
+        <LinearLayout
+            android:id="@+id/zonesList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+    </LinearLayout>
+</ScrollView>
