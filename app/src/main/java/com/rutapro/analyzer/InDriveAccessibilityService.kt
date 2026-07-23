@@ -54,6 +54,9 @@ class InDriveAccessibilityService : AccessibilityService() {
         val offer = RideParser.parse(text) ?: return
         if (!offer.isValid) return
 
+        // Cuenta y muestra solo la primera vez que aparece esta oferta.
+        if (!com.rutapro.analyzer.analyzer.OfferGate.isNew(offer)) return
+
         // Asegura que el overlay este arriba para mostrar el resultado.
         if (OverlayService.instance == null) {
             startService(Intent(this, OverlayService::class.java))

@@ -27,6 +27,7 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.rutapro.analyzer.OverlayService
 import com.rutapro.analyzer.R
 import com.rutapro.analyzer.analyzer.AppSettings
+import com.rutapro.analyzer.analyzer.OfferGate
 import com.rutapro.analyzer.analyzer.RideAnalyzer
 import com.rutapro.analyzer.analyzer.Verdict
 import com.rutapro.analyzer.location.LocationTracker
@@ -176,6 +177,9 @@ class ScreenCaptureService : Service() {
 
         val parsed = RideParser.parseWithApp(text) ?: return
         if (!parsed.offer.isValid) return
+
+        // Cuenta y muestra solo la primera vez que aparece esta oferta.
+        if (!OfferGate.isNew(parsed.offer)) return
 
         val analysis = analyzer.analyze(parsed.offer)
         if (analysis.verdict == Verdict.BAD) settings.recordReject() else settings.recordAccept()
