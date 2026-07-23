@@ -3,14 +3,17 @@ package com.rutapro.analyzer
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
+import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.rutapro.analyzer.analyzer.AppSettings
 import com.rutapro.analyzer.data.EntryType
 import com.rutapro.analyzer.data.Ledger
 import com.rutapro.analyzer.data.PayMethod
+import java.util.Locale
 
 /**
  * Alta de un movimiento: ingreso o gasto, con categoria y metodo de pago.
@@ -27,6 +30,10 @@ class TransactionActivity : AppCompatActivity() {
     private lateinit var amountInput: EditText
     private lateinit var noteInput: EditText
     private lateinit var categoryGrid: LinearLayout
+    private lateinit var fuelExtra: LinearLayout
+    private lateinit var pricePerGallon: EditText
+    private lateinit var odometer: EditText
+    private lateinit var fuelHint: TextView
 
     private var isIncome = true
     private var method = PayMethod.CASH
@@ -45,6 +52,10 @@ class TransactionActivity : AppCompatActivity() {
         amountInput = findViewById(R.id.amountInput)
         noteInput = findViewById(R.id.noteInput)
         categoryGrid = findViewById(R.id.categoryGrid)
+        fuelExtra = findViewById(R.id.fuelExtra)
+        pricePerGallon = findViewById(R.id.pricePerGallon)
+        odometer = findViewById(R.id.odometer)
+        fuelHint = findViewById(R.id.fuelHint)
 
         // La Billetera puede abrir esta pantalla ya posicionada.
         when (intent.getStringExtra(EXTRA_MODE)) {
@@ -69,6 +80,21 @@ class TransactionActivity : AppCompatActivity() {
         pick(payCash, method == PayMethod.CASH, "#2BD576")
         pick(payCard, method == PayMethod.CARD, "#22C7E0")
         buildCategories()
+        renderFuelExtra()
+    }
+
+    /** Los campos de tanqueo solo tienen sentido en el gasto de Combustible. */
+    private fun renderFuelExtra() {
+        val isFuel = !isIncome && category == "Combustible"
+        fuelExtra.visibility = if (isFuel) View.VISIBLE else View.GONE
+        if (!isFuel) return
+
+        val last = ledger.lastFuelFill()
+        fuelHint.text = if (last != null) {
+            "Último odómetro registrado: ${last.odometer.toInt()} km"
+        } else {
+            "Este es tu primer tanqueo. En el siguiente ya podré calcular tu rendimiento real."
+        }
     }
 
     private fun pick(view: TextView, selected: Boolean, colorOn: String) {
@@ -128,14 +154,41 @@ class TransactionActivity : AppCompatActivity() {
             return
         }
         val note = noteInput.text.toString().trim().ifBlank { category }
+        val isFuel = !isIncome && category == "Combustible"
         val type = if (isIncome) EntryType.RIDE
-        else if (category == "Combustible") EntryType.FUEL
+        else if (isFuel) EntryType.FUEL
         else EntryType.EXPENSE
 
-        ledger.add(type, amount, note, category, method)
+        val ppg = if (isFuel) num(pricePerGallon) ?: 0.0 else 0.0
+        val odo = if (isFuel) num(odometer) ?: 0.0 else 0.0
+
+        ledger.add(type, amount, note, category, method, odo, ppg)
+
+        // Si ya hay dos tanqueos con odometro, actualizamos el costo real por km.
+        if (isFuel) {
+            val eff = ledger.fuelEfficiency()
+            if (eff != null) {
+                AppSettings(this).fuelCostPerKm = eff.costPerKm
+                Toast.makeText(
+                    this,
+                    String.format(
+                        Locale.US,
+                        "Tu carro rinde %.1f km/gal → costo real $%.3f/km. Ya lo actualicé.",
+                        eff.kmPerGallon, eff.costPerKm
+                    ),
+                    Toast.LENGTH_LONG
+                ).show()
+                finish()
+                return
+            }
+        }
+
         Toast.makeText(this, "Guardado", Toast.LENGTH_SHORT).show()
         finish()
     }
+
+    private fun num(field: EditText): Double? =
+        field.text.toString().trim().replace(',', '.').toDoubleOrNull()
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 

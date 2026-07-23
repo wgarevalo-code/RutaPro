@@ -120,25 +120,43 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:orientation="vertical"
                 android:background="@drawable/card_bg"
                 android:padding="16dp"
                 android:layout_marginTop="12dp">
-                <LinearLayout style="@style/StatCol">
-                    <TextView android:id="@+id/statTotal" style="@style/StatNum"
-                        android:textColor="@color/cyan" android:text="0" />
-                    <TextView style="@style/StatLabel" android:text="Total" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <LinearLayout style="@style/StatCol">
+                        <TextView android:id="@+id/statTotal" style="@style/StatNum"
+                            android:textColor="@color/cyan" android:text="0" />
+                        <TextView style="@style/StatLabel" android:text="Total" />
+                    </LinearLayout>
+                    <LinearLayout style="@style/StatCol">
+                        <TextView android:id="@+id/statAccept" style="@style/StatNum"
+                            android:textColor="@color/green" android:text="0" />
+                        <TextView style="@style/StatLabel" android:text="Aceptar" />
+                    </LinearLayout>
+                    <LinearLayout style="@style/StatCol">
+                        <TextView android:id="@+id/statReject" style="@style/StatNum"
+                            android:textColor="@color/red" android:text="0" />
+                        <TextView style="@style/StatLabel" android:text="Rechazar" />
+                    </LinearLayout>
                 </LinearLayout>
-                <LinearLayout style="@style/StatCol">
-                    <TextView android:id="@+id/statAccept" style="@style/StatNum"
-                        android:textColor="@color/green" android:text="0" />
-                    <TextView style="@style/StatLabel" android:text="Aceptar" />
-                </LinearLayout>
-                <LinearLayout style="@style/StatCol">
-                    <TextView android:id="@+id/statReject" style="@style/StatNum"
-                        android:textColor="@color/red" android:text="0" />
-                    <TextView style="@style/StatLabel" android:text="Rechazar" />
-                </LinearLayout>
+                <TextView android:id="@+id/resetStats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="↺  Reiniciar contadores"
+                    android:gravity="center"
+                    android:background="@drawable/toggle_off"
+                    android:textColor="@color/textMuted"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:paddingVertical="11dp"
+                    android:clickable="true"
+                    android:focusable="true" />
             </LinearLayout>
 
             <!-- Filtros -->

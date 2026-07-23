@@ -97,6 +97,8 @@ class WalletActivity : AppCompatActivity() {
         hoursOnline.text = formatDuration(secs)
         realPerHour.text = if (period == 1 && hours > 0.02) money(s.net / hours) else "—"
 
+        renderFuelEfficiency()
+
         periodLabel.text = when (period) {
             1 -> "Resumen de hoy"
             7 -> "Resumen de los últimos 7 días"
@@ -104,6 +106,28 @@ class WalletActivity : AppCompatActivity() {
         }
         renderTabs()
         renderList(entries)
+    }
+
+    /** Rendimiento calculado con los dos ultimos tanqueos. */
+    private fun renderFuelEfficiency() {
+        val view = findViewById<TextView>(R.id.fuelEfficiency)
+        val eff = ledger.fuelEfficiency()
+        if (eff != null) {
+            view.text = String.format(
+                Locale.US,
+                "Recorriste %.0f km con %.2f galones.\nRinde %.1f km/galón · te cuesta $%.3f por km.",
+                eff.kmDriven, eff.gallons, eff.kmPerGallon, eff.costPerKm
+            )
+        } else {
+            val last = ledger.lastFuelFill()
+            view.text = if (last != null) {
+                "Ya tengo tu primer tanqueo (odómetro ${last.odometer.toInt()} km). " +
+                    "Registra el próximo con su odómetro y te calculo el consumo real."
+            } else {
+                "Registra un tanqueo con el precio del galón y el odómetro. " +
+                    "Al segundo tanqueo te digo exactamente cuánto rinde tu carro."
+            }
+        }
     }
 
     private fun renderTabs() {

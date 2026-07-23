@@ -90,7 +90,17 @@ class MainActivity : AppCompatActivity() {
         togglePickup.setOnClickListener { settings.filterPickupOn = !settings.filterPickupOn; renderFilters() }
         toggleTurbo.setOnClickListener { settings.turboMode = !settings.turboMode; renderFilters() }
 
-        statTotal.setOnLongClickListener { settings.resetStats(); renderStats(); true }
+        findViewById<TextView>(R.id.resetStats).setOnClickListener {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Reiniciar contadores")
+                .setMessage("Los contadores de Total, Aceptar y Rechazar vuelven a cero. Tu billetera no se toca.")
+                .setPositiveButton("Reiniciar") { _, _ ->
+                    settings.resetStats(); renderStats()
+                    Toast.makeText(this, "Contadores en cero", Toast.LENGTH_SHORT).show()
+                }
+                .setNegativeButton("Cancelar", null)
+                .show()
+        }
 
         setupBottomNav()
     }

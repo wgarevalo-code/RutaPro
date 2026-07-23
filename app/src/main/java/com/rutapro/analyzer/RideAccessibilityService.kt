@@ -7,7 +7,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.rutapro.analyzer.analyzer.AppSettings
 import com.rutapro.analyzer.analyzer.RideAnalyzer
-import com.rutapro.analyzer.parser.UberParser
+import com.rutapro.analyzer.parser.RideParser
 
 /**
  * Lee el texto que aparece en la pantalla del conductor de Uber, lo pasa al parser + analizador,
@@ -50,7 +50,7 @@ class RideAccessibilityService : AccessibilityService() {
         lastText = text
         lastProcessMs = now
 
-        val offer = UberParser.parse(text)
+        val offer = RideParser.parse(text)
         if (offer != null && offer.isValid) {
             val analysis = analyzer.analyze(offer)
             if (analysis.verdict == com.rutapro.analyzer.analyzer.Verdict.BAD) {

@@ -8,45 +8,38 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.view.Gravity
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.ImageView
 import android.widget.TextView
 import com.rutapro.analyzer.analyzer.Analysis
 import com.rutapro.analyzer.analyzer.RideOffer
 import com.rutapro.analyzer.analyzer.Verdict
+import com.rutapro.analyzer.data.EntryType
+import com.rutapro.analyzer.data.Ledger
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
- * Servicio en primer plano que dibuja UNA sola burbuja flotante: el logo de RutaPro.
- * Al llegar una carrera, el logo se pinta del color del veredicto y se despliega una
- * tarjeta con los numeros. Se puede arrastrar y tocar para ocultar/mostrar el detalle.
+ * Servicio en primer plano que muestra un POPUP temporal cuando llega una carrera.
+ * No deja ninguna burbuja permanente en pantalla: aparece, informas, y se va solo.
  */
 class OverlayService : Service() {
 
     private lateinit var windowManager: WindowManager
-    private lateinit var root: View
-    private lateinit var logo: ImageView
-    private lateinit var card: View
-    private lateinit var result: TextView
-    private lateinit var btnTook: TextView
-    private lateinit var btnSkip: TextView
-    private lateinit var ledger: com.rutapro.analyzer.data.Ledger
-    private lateinit var params: WindowManager.LayoutParams
+    private lateinit var ledger: Ledger
     private val handler = Handler(Looper.getMainLooper())
-    private val hideDetail = Runnable { card.visibility = View.GONE }
 
-    /** Tarifa de la carrera que se esta mostrando, para registrarla si la toma. */
+    private var popup: View? = null
+    private val autoHide = Runnable { removePopup() }
+
     private var currentFare: Double = 0.0
-
-    /** App de donde salio la carrera (Uber / inDrive), para la contabilidad. */
     private var currentApp: String = "Uber"
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -54,93 +47,9 @@ class OverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        startForegroundNotification()
-        addBubble()
-    }
-
-    private fun addBubble() {
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        root = LayoutInflater.from(this).inflate(R.layout.overlay_bubble, null)
-        logo = root.findViewById(R.id.overlayLogo)
-        card = root.findViewById(R.id.overlayCard)
-        result = root.findViewById(R.id.overlayResult)
-        btnTook = root.findViewById(R.id.btnTook)
-        btnSkip = root.findViewById(R.id.btnSkip)
-        ledger = com.rutapro.analyzer.data.Ledger(this)
-
-        btnTook.setOnClickListener {
-            if (currentFare > 0) {
-                ledger.add(
-                    com.rutapro.analyzer.data.EntryType.RIDE,
-                    currentFare,
-                    "Carrera $currentApp",
-                    currentApp,
-                    ""
-                )
-                toast("Carrera registrada: " + money(currentFare))
-            }
-            card.visibility = View.GONE
-        }
-        btnSkip.setOnClickListener { card.visibility = View.GONE }
-
-        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        else
-            @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
-
-        params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            type,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 24
-            y = 260
-        }
-
-        enableDragAndTap()
-        windowManager.addView(root, params)
-    }
-
-    private var downX = 0
-    private var downY = 0
-    private var touchX = 0f
-    private var touchY = 0f
-    private var moved = false
-
-    private fun enableDragAndTap() {
-        logo.setOnTouchListener { _, e ->
-            when (e.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    downX = params.x; downY = params.y
-                    touchX = e.rawX; touchY = e.rawY
-                    moved = false
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    val dx = (e.rawX - touchX).roundToInt()
-                    val dy = (e.rawY - touchY).roundToInt()
-                    if (kotlin.math.abs(dx) > 8 || kotlin.math.abs(dy) > 8) moved = true
-                    params.x = downX + dx
-                    params.y = downY + dy
-                    windowManager.updateViewLayout(root, params)
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    if (!moved) {
-                        // Toque: alterna el detalle si hay algo que mostrar.
-                        if (result.text.isNotBlank()) {
-                            card.visibility =
-                                if (card.visibility == View.VISIBLE) View.GONE else View.VISIBLE
-                        }
-                    }
-                    true
-                }
-                else -> false
-            }
-        }
+        ledger = Ledger(this)
+        startForegroundNotification()
     }
 
     /** Llamado desde el servicio de accesibilidad cuando hay una oferta analizada. */
@@ -148,46 +57,86 @@ class OverlayService : Service() {
         handler.post {
             currentFare = offer.fare
             currentApp = sourceApp
+            removePopup()
+
+            val view = LayoutInflater.from(this).inflate(R.layout.overlay_popup, null)
             val color = when (analysis.verdict) {
                 Verdict.GOOD -> Color.parseColor("#2BD576")
                 Verdict.FAIR -> Color.parseColor("#FFCC33")
                 Verdict.BAD -> Color.parseColor("#FF4D5E")
             }
-            logo.background?.mutate()?.setTint(color)
-            (card.background?.mutate() as? android.graphics.drawable.GradientDrawable)
-                ?.setStroke(dp(2), color)
-            result.setTextColor(color)
-            result.text = buildString {
-                append(analysis.headline).append('\n')
+
+            (view.background?.mutate() as? GradientDrawable)?.setStroke(dp(2), color)
+
+            val headline = view.findViewById<TextView>(R.id.popupHeadline)
+            headline.text = analysis.headline
+            headline.setTextColor(color)
+
+            view.findViewById<TextView>(R.id.popupBody).text = buildString {
                 append("Por hora  ").append(money(analysis.perHour)).append('\n')
                 append("Por km    ").append(money(analysis.perKm)).append('\n')
-                append("Recogida  ").append(fmtKm(offer.pickupKm)).append(" km\n")
-                append("Tarifa    ").append(money(offer.fare)).append('\n')
-                append(analysis.reason)
+                append("Recogida  ").append(km(offer.pickupKm)).append(" km\n")
+                append("Tarifa    ").append(money(offer.fare)).append("  ·  ").append(sourceApp)
             }
-            card.visibility = View.VISIBLE
-            // Vuelve al logo solo despues de unos segundos.
-            handler.removeCallbacks(hideDetail)
-            handler.postDelayed(hideDetail, 25000)
+
+            view.findViewById<TextView>(R.id.btnTook).setOnClickListener {
+                if (currentFare > 0) {
+                    ledger.add(EntryType.RIDE, currentFare, "Carrera $currentApp", currentApp, "")
+                    toast("Carrera registrada: " + money(currentFare))
+                }
+                removePopup()
+            }
+            view.findViewById<TextView>(R.id.btnSkip).setOnClickListener { removePopup() }
+
+            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
+
+            val params = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                type,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                y = dp(90)
+            }
+
+            try {
+                windowManager.addView(view, params)
+                popup = view
+                handler.removeCallbacks(autoHide)
+                handler.postDelayed(autoHide, 30000)
+            } catch (_: Exception) {
+            }
         }
     }
+
+    private fun removePopup() {
+        handler.removeCallbacks(autoHide)
+        popup?.let {
+            try { windowManager.removeView(it) } catch (_: Exception) {}
+        }
+        popup = null
+    }
+
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).roundToInt()
+    private fun money(v: Double): String = String.format(Locale.US, "$%.2f", v)
+    private fun km(v: Double): String = String.format(Locale.US, "%.1f", v)
 
     private fun toast(msg: String) {
         android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_SHORT).show()
     }
 
-    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).roundToInt()
-    private fun money(v: Double): String = String.format(java.util.Locale.US, "$%.2f", v)
-    private fun fmtKm(v: Double): String = String.format(java.util.Locale.US, "%.1f", v)
-
     private fun startForegroundNotification() {
         val channelId = "ruta_pro_overlay"
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId, "RutaPro", NotificationManager.IMPORTANCE_MIN
+            nm.createNotificationChannel(
+                NotificationChannel(channelId, "RutaPro", NotificationManager.IMPORTANCE_MIN)
             )
-            nm.createNotificationChannel(channel)
         }
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             Notification.Builder(this, channelId)
@@ -203,10 +152,7 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        handler.removeCallbacks(hideDetail)
-        if (::root.isInitialized) {
-            try { windowManager.removeView(root) } catch (_: Exception) {}
-        }
+        removePopup()
         instance = null
     }
 

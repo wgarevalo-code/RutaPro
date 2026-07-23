@@ -29,10 +29,26 @@ data class LedgerEntry(
     val amount: Double,
     val note: String,
     val category: String = "",
-    val method: String = ""
+    val method: String = "",
+    /** Solo para tanqueos: lectura del odometro en km. */
+    val odometer: Double = 0.0,
+    /** Solo para tanqueos: precio por galon del dia. */
+    val pricePerGallon: Double = 0.0
 ) {
     val isIncome: Boolean get() = type == EntryType.RIDE
+
+    /** Galones cargados, deducidos del monto y el precio. */
+    val gallons: Double
+        get() = if (pricePerGallon > 0) amount / pricePerGallon else 0.0
 }
+
+/** Resultado del calculo de rendimiento real entre dos tanqueos. */
+data class FuelEfficiency(
+    val kmDriven: Double,
+    val gallons: Double,
+    val kmPerGallon: Double,
+    val costPerKm: Double
+)
 
 data class DaySummary(
     val income: Double,
@@ -55,7 +71,9 @@ class Ledger(context: Context) {
         amount: Double,
         note: String,
         category: String = "",
-        method: String = ""
+        method: String = "",
+        odometer: Double = 0.0,
+        pricePerGallon: Double = 0.0
     ) {
         if (amount <= 0) return
         val arr = readArray()
@@ -67,6 +85,8 @@ class Ledger(context: Context) {
             .put("note", note)
             .put("category", category)
             .put("method", method)
+            .put("odometer", odometer)
+            .put("ppg", pricePerGallon)
         arr.put(o)
         // Conserva los ultimos 2000 movimientos.
         val trimmed = if (arr.length() > 2000) {
@@ -100,7 +120,9 @@ class Ledger(context: Context) {
                     amount = o.optDouble("amount", 0.0),
                     note = o.optString("note"),
                     category = o.optString("category"),
-                    method = o.optString("method")
+                    method = o.optString("method"),
+                    odometer = o.optDouble("odometer", 0.0),
+                    pricePerGallon = o.optDouble("ppg", 0.0)
                 )
             )
         }
@@ -133,6 +155,35 @@ class Ledger(context: Context) {
     }
 
     fun clearAll() = prefs.edit().remove(KEY).apply()
+
+    /**
+     * Calcula el rendimiento real del vehiculo entre los dos ultimos tanqueos
+     * que traen lectura de odometro. Devuelve null si aun no hay suficientes datos.
+     *
+     * El metodo es el estandar: los galones del ULTIMO tanqueo son los que
+     * recorrieron la distancia desde el tanqueo anterior hasta este.
+     */
+    fun fuelEfficiency(): FuelEfficiency? {
+        val fills = all()
+            .filter { it.type == EntryType.FUEL && it.odometer > 0 && it.pricePerGallon > 0 }
+            .sortedByDescending { it.odometer }
+        if (fills.size < 2) return null
+
+        val last = fills[0]
+        val prev = fills[1]
+        val kmDriven = last.odometer - prev.odometer
+        val gallons = last.gallons
+        if (kmDriven <= 0 || gallons <= 0) return null
+
+        val kmPerGallon = kmDriven / gallons
+        val costPerKm = last.pricePerGallon / kmPerGallon
+        return FuelEfficiency(kmDriven, gallons, kmPerGallon, costPerKm)
+    }
+
+    /** El ultimo tanqueo registrado (para mostrar el odometro anterior). */
+    fun lastFuelFill(): LedgerEntry? =
+        all().filter { it.type == EntryType.FUEL && it.odometer > 0 }
+            .maxByOrNull { it.odometer }
 
     private fun readArray(): JSONArray =
         try { JSONArray(prefs.getString(KEY, "[]") ?: "[]") } catch (e: Exception) { JSONArray() }
