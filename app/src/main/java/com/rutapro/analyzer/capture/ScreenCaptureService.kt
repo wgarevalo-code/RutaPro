@@ -174,14 +174,13 @@ class ScreenCaptureService : Service() {
         if (text.isBlank() || text == lastText) return
         lastText = text
 
-        val offer = RideParser.parse(text) ?: return
-        if (!offer.isValid) return
+        val parsed = RideParser.parseWithApp(text) ?: return
+        if (!parsed.offer.isValid) return
 
-        val analysis = analyzer.analyze(offer)
+        val analysis = analyzer.analyze(parsed.offer)
         if (analysis.verdict == Verdict.BAD) settings.recordReject() else settings.recordAccept()
 
-        val app = if (text.contains("indrive", ignoreCase = true)) "inDrive" else "Uber"
-        OverlayService.instance?.showAnalysis(offer, analysis, app)
+        OverlayService.instance?.showAnalysis(parsed.offer, analysis, parsed.app)
     }
 
     private fun releaseCapture() {

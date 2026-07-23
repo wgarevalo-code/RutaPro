@@ -72,21 +72,23 @@ class OverlayService : Service() {
             headline.text = analysis.headline
             headline.setTextColor(color)
 
-            view.findViewById<TextView>(R.id.popupBody).text = buildString {
-                append("Por hora  ").append(money(analysis.perHour)).append('\n')
-                append("Por km    ").append(money(analysis.perKm)).append('\n')
-                append("Recogida  ").append(km(offer.pickupKm)).append(" km\n")
-                append("Ofrecen   ").append(money(offer.fare)).append("  ·  ").append(sourceApp)
+            // Numero estrella: ganancia por hora, en grande y a color.
+            val hero = view.findViewById<TextView>(R.id.popupHero)
+            hero.text = whole(analysis.perHour) + "/h"
+            hero.setTextColor(color)
+
+            // Contexto minimo: tarifa, km del viaje y por km.
+            view.findViewById<TextView>(R.id.popupSub).text = buildString {
+                append(money(offer.fare)).append(" · ")
+                append(km(offer.tripKm)).append(" km · ")
+                append(money(analysis.perKm)).append("/km")
             }
 
             // inDrive se negocia: mostramos cuanto pedir en grande.
             val negoView = view.findViewById<TextView>(R.id.popupNegotiate)
             if (sourceApp == "inDrive") {
                 negoView.visibility = View.VISIBLE
-                negoView.text = buildString {
-                    append("💬 Pide  ").append(money(analysis.goodFare)).append('\n')
-                    append("mínimo que te conviene: ").append(money(analysis.fairFare))
-                }
+                negoView.text = "💬 Pide " + money(analysis.goodFare)
                 negoView.setTextColor(
                     if (offer.fare >= analysis.fairFare) Color.parseColor("#2BD576")
                     else Color.parseColor("#FFCC33")
@@ -145,6 +147,7 @@ class OverlayService : Service() {
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).roundToInt()
     private fun money(v: Double): String = String.format(Locale.US, "$%.2f", v)
+    private fun whole(v: Double): String = String.format(Locale.US, "$%.0f", v)
     private fun km(v: Double): String = String.format(Locale.US, "%.1f", v)
 
     private fun toast(msg: String) {
