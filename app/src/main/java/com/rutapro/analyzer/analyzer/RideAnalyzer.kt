@@ -1,6 +1,6 @@
 package com.rutapro.analyzer.analyzer
 
-import kotlin.math.roundToInt
+import kotlin.math.ceil
 
 enum class Verdict { GOOD, FAIR, BAD }
 
@@ -8,14 +8,16 @@ enum class Verdict { GOOD, FAIR, BAD }
  * Resultado del analisis de una oferta.
  */
 data class Analysis(
-    val fuelCost: Double,   // costo estimado de gasolina para toda la operacion
-    val net: Double,        // ganancia neta despues de gasolina
-    val perKm: Double,      // neto por km de viaje
-    val perMin: Double,     // neto por minuto trabajado (recogida + viaje)
-    val perHour: Double,    // neto proyectado por hora
+    val fuelCost: Double,     // costo estimado de gasolina para toda la operacion
+    val net: Double,          // ganancia neta despues de gasolina
+    val perKm: Double,        // neto por km de viaje
+    val perMin: Double,       // neto por minuto trabajado (recogida + viaje)
+    val perHour: Double,      // neto proyectado por hora
     val verdict: Verdict,
-    val headline: String,   // texto corto: CONVIENE / REGULAR / NO CONVIENE
-    val reason: String      // explicacion corta del porque
+    val headline: String,     // texto corto: CONVIENE / REGULAR / NO CONVIENE
+    val reason: String,       // explicacion corta del porque
+    val fairFare: Double,     // precio minimo para que ESTA carrera cumpla tus filtros
+    val goodFare: Double      // precio recomendado para pedir (con margen para negociar)
 )
 
 /**
@@ -89,8 +91,38 @@ class RideAnalyzer(private val settings: AppSettings) {
             Verdict.BAD -> "NO CONVIENE"
         }
 
-        return Analysis(fuelCost, net, perKm, perMin, perHour, verdict, headline, reason)
+        // Precio minimo para que esta carrera cumpla TODOS tus filtros encendidos.
+        val fairFare = suggestFare(offer, fuelCost, totalMin, reqKm, reqHour)
+        // Precio recomendado para pedir: un 12% arriba, para dejar margen de regateo.
+        val goodFare = roundUp(fairFare * 1.12)
+
+        return Analysis(
+            fuelCost, net, perKm, perMin, perHour, verdict, headline, reason,
+            fairFare, goodFare
+        )
     }
+
+    /**
+     * Calcula el precio minimo al que la carrera te conviene: es el mayor de lo que
+     * exigen tus filtros por km y por hora, mas la gasolina. Es el numero clave para
+     * negociar en inDrive.
+     */
+    private fun suggestFare(
+        offer: RideOffer, fuelCost: Double, totalMin: Double,
+        reqKm: Double, reqHour: Double
+    ): Double {
+        var needed = fuelCost  // como minimo, cubrir la gasolina
+        if (settings.filterKmOn && offer.tripKm > 0) {
+            needed = maxOf(needed, reqKm * offer.tripKm + fuelCost)
+        }
+        if (settings.filterHourOn && totalMin > 0) {
+            needed = maxOf(needed, reqHour * (totalMin / 60.0) + fuelCost)
+        }
+        return roundUp(needed)
+    }
+
+    /** Redondea hacia arriba al siguiente multiplo de 0.25 (queda "bonito" para pedir). */
+    private fun roundUp(v: Double): Double = ceil(v * 4.0) / 4.0
 
     private fun fmt(v: Double): String =
         String.format(java.util.Locale.US, "%.1f", v)
