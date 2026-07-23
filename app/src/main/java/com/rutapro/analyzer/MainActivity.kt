@@ -55,6 +55,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var overlayState: TextView
     private lateinit var locationState: TextView
+    private lateinit var indriveState: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         filtersActive = findViewById(R.id.filtersActive)
         overlayState = findViewById(R.id.overlayState)
         locationState = findViewById(R.id.locationState)
+        indriveState = findViewById(R.id.indriveState)
 
         loadValues()
         setupExpanders()
@@ -91,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<TextView>(R.id.overlayBtn).setOnClickListener { requestOverlay() }
         findViewById<TextView>(R.id.locationBtn).setOnClickListener { requestLocation() }
+        findViewById<TextView>(R.id.indriveBtn).setOnClickListener { openInDriveAccessibility() }
 
         toggleHour.setOnClickListener { settings.filterHourOn = !settings.filterHourOn; renderFilters() }
         toggleKm.setOnClickListener { settings.filterKmOn = !settings.filterKmOn; renderFilters() }
@@ -311,9 +314,45 @@ class MainActivity : AppCompatActivity() {
         updateStatus()
     }
 
+    private fun openInDriveAccessibility() {
+        AlertDialog.Builder(this)
+            .setTitle("Lectura de inDrive")
+            .setMessage(
+                "Se abrirá Accesibilidad. Busca \"RutaPro - lector de inDrive\" en la lista y actívalo.\n\n" +
+                    "Este modo se usa SOLO cuando inDrive está en pantalla. No lee ninguna otra app."
+            )
+            .setPositiveButton("Abrir accesibilidad") { _, _ ->
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
     private fun updateStatus() {
         renderPerm(overlayState, Settings.canDrawOverlays(this))
         renderPerm(locationState, hasLocation())
+        if (isInDriveAccessibilityEnabled()) {
+            indriveState.text = "✓ Activado para inDrive"
+            indriveState.setTextColor(Color.parseColor("#2BD576"))
+        } else {
+            indriveState.text = "Desactivado — tócalo si manejas inDrive"
+            indriveState.setTextColor(Color.parseColor("#8A96B5"))
+        }
+    }
+
+    private fun isInDriveAccessibilityEnabled(): Boolean {
+        val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
+        if (!am.isEnabled) return false
+        val expected = "$packageName/${InDriveAccessibilityService::class.java.name}"
+        val enabled = Settings.Secure.getString(
+            contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+        val splitter = android.text.TextUtils.SimpleStringSplitter(':')
+        splitter.setString(enabled)
+        while (splitter.hasNext()) {
+            if (splitter.next().equals(expected, ignoreCase = true)) return true
+        }
+        return false
     }
 
     private fun renderPerm(view: TextView, granted: Boolean) {

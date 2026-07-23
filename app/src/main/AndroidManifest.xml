@@ -40,11 +40,25 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
 
-        <!-- Lee la pantalla por captura + OCR. No usa accesibilidad. -->
+        <!-- Uber: lee la pantalla por captura + OCR. -->
         <service
             android:name=".capture.ScreenCaptureService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection|location" />
+
+        <!-- inDrive: opcional, por accesibilidad (inDrive bloquea la captura). -->
+        <service
+            android:name=".InDriveAccessibilityService"
+            android:exported="false"
+            android:label="@string/accessibility_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
 
         <service
             android:name=".OverlayService"

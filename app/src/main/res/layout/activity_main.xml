@@ -358,6 +358,32 @@
                     android:paddingTop="6dp" />
             </LinearLayout>
 
+            <!-- Modo inDrive (opcional) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginTop="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🚗 Modo inDrive (opcional)"
+                    android:textColor="@color/textMain"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+                <TextView style="@style/FilterDesc"
+                    android:text="inDrive bloquea la captura de pantalla, así que la lectura por OCR no funciona con él. Si manejas inDrive, activa este modo: usa accesibilidad SOLO para inDrive. Si solo manejas Uber, déjalo apagado."
+                    android:paddingTop="6dp"
+                    android:paddingBottom="12dp" />
+
+                <TextView android:id="@+id/indriveBtn" style="@style/PermBtn"
+                    android:text="Activar lectura de inDrive" />
+                <TextView android:id="@+id/indriveState" style="@style/PermState"
+                    android:text="Desactivado" />
+            </LinearLayout>
+
             <TextView android:id="@+id/saveBtn"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

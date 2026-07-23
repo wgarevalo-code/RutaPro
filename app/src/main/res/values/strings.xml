@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">RutaPro</string>
-    <string name="accessibility_label">RutaPro - lector de carreras</string>
-    <string name="accessibility_description">Lee la tarifa y distancia de la carrera en pantalla para calcular si conviene. Los datos no salen del telefono.</string>
+    <string name="accessibility_label">RutaPro - lector de inDrive</string>
+    <string name="accessibility_description">Solo para inDrive: como inDrive bloquea la captura de pantalla, este modo lee el texto de la oferta por accesibilidad para calcular si conviene. Los datos no salen del telefono.</string>
 </resources>
