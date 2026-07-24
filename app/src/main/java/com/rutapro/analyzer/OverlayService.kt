@@ -150,6 +150,51 @@ class OverlayService : Service() {
         popup = null
     }
 
+    // ---- Modo diagnostico: muestra el texto crudo leido ----
+    private var debugView: View? = null
+    private val autoHideDebug = Runnable { removeDebug() }
+
+    fun showDebug(source: String, raw: String) {
+        handler.post {
+            removeDebug()
+            val tv = TextView(this).apply {
+                text = "🔬 $source — toca para cerrar\n\n" + raw.replace("\n", " · ").take(700)
+                setTextColor(Color.WHITE)
+                setBackgroundColor(Color.parseColor("#EE0A0F1F"))
+                textSize = 10.5f
+                setPadding(dp(14), dp(14), dp(14), dp(14))
+                setOnClickListener { removeDebug() }
+            }
+            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            else
+                @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
+            val params = WindowManager.LayoutParams(
+                dp(320),
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                type,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                y = dp(70)
+            }
+            try {
+                windowManager.addView(tv, params)
+                debugView = tv
+                handler.removeCallbacks(autoHideDebug)
+                handler.postDelayed(autoHideDebug, 20000)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun removeDebug() {
+        handler.removeCallbacks(autoHideDebug)
+        debugView?.let { try { windowManager.removeView(it) } catch (_: Exception) {} }
+        debugView = null
+    }
+
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).roundToInt()
     private fun money(v: Double): String = String.format(Locale.US, "$%.2f", v)
     private fun whole(v: Double): String = String.format(Locale.US, "$%.0f", v)
@@ -182,6 +227,7 @@ class OverlayService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         removePopup()
+        removeDebug()
         instance = null
     }
 

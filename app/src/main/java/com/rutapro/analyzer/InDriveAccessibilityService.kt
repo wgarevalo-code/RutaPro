@@ -35,7 +35,6 @@ class InDriveAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        if (!settings.running) return
         val pkg = event.packageName?.toString() ?: return
         if (!pkg.startsWith("sinet.startup.inDriver")) return
 
@@ -50,6 +49,14 @@ class InDriveAccessibilityService : AccessibilityService() {
 
         lastText = text
         lastProcessMs = now
+
+        // Diagnostico: se muestra aunque el analisis este apagado.
+        if (settings.debugMode) {
+            if (OverlayService.instance == null) startService(Intent(this, OverlayService::class.java))
+            OverlayService.instance?.showDebug("inDrive (accesibilidad)", text)
+        }
+
+        if (!settings.running) return
 
         val offer = RideParser.parse(text) ?: return
         if (!offer.isValid) return

@@ -175,6 +175,10 @@ class ScreenCaptureService : Service() {
         if (text.isBlank() || text == lastText) return
         lastText = text
 
+        if (settings.debugMode) {
+            OverlayService.instance?.showDebug("OCR / Uber", text)
+        }
+
         val parsed = RideParser.parseWithApp(text) ?: return
         if (!parsed.offer.isValid) return
 

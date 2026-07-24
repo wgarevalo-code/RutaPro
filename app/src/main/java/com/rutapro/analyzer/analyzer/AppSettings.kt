@@ -61,6 +61,11 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean(KEY_RUNNING, false)
         set(v) = prefs.edit().putBoolean(KEY_RUNNING, v).apply()
 
+    /** Modo diagnostico: muestra en pantalla el texto crudo que se lee. */
+    var debugMode: Boolean
+        get() = prefs.getBoolean(KEY_DEBUG, false)
+        set(v) = prefs.edit().putBoolean(KEY_DEBUG, v).apply()
+
     // --- Interruptores ON/OFF de cada filtro ---
     var filterHourOn: Boolean
         get() = prefs.getBoolean(KEY_F_HOUR, true)
@@ -153,6 +158,7 @@ class AppSettings(context: Context) {
         private const val KEY_FUEL_PER_KM = "fuel_per_km"
         private const val KEY_TURBO = "turbo"
         private const val KEY_RUNNING = "running"
+        private const val KEY_DEBUG = "debug"
         private const val KEY_F_HOUR = "f_hour"
         private const val KEY_F_KM = "f_km"
         private const val KEY_F_PICKUP = "f_pickup"

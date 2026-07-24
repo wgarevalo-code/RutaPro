@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var overlayState: TextView
     private lateinit var locationState: TextView
     private lateinit var indriveState: TextView
+    private lateinit var toggleDebug: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         overlayState = findViewById(R.id.overlayState)
         locationState = findViewById(R.id.locationState)
         indriveState = findViewById(R.id.indriveState)
+        toggleDebug = findViewById(R.id.toggleDebug)
 
         loadValues()
         setupExpanders()
@@ -94,6 +96,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.overlayBtn).setOnClickListener { requestOverlay() }
         findViewById<TextView>(R.id.locationBtn).setOnClickListener { requestLocation() }
         findViewById<TextView>(R.id.indriveBtn).setOnClickListener { openInDriveAccessibility() }
+        toggleDebug.setOnClickListener { settings.debugMode = !settings.debugMode; renderFilters() }
 
         toggleHour.setOnClickListener { settings.filterHourOn = !settings.filterHourOn; renderFilters() }
         toggleKm.setOnClickListener { settings.filterKmOn = !settings.filterKmOn; renderFilters() }
@@ -257,6 +260,7 @@ class MainActivity : AppCompatActivity() {
         renderToggle(toggleKm, settings.filterKmOn)
         renderToggle(togglePickup, settings.filterPickupOn)
         renderToggle(toggleTurbo, settings.turboMode)
+        renderToggle(toggleDebug, settings.debugMode)
         turboState.text = if (settings.turboMode) "Activado" else "Desactivado"
         filtersActive.text = "${settings.activeFilterCount} activos"
     }
