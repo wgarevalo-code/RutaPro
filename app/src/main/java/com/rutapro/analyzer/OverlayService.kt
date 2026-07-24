@@ -68,21 +68,26 @@ class OverlayService : Service() {
 
             (view.background?.mutate() as? GradientDrawable)?.setStroke(dp(2), color)
 
+            // Simbolo gigante segun el veredicto.
+            val symbol = view.findViewById<TextView>(R.id.popupSymbol)
+            symbol.text = when (analysis.verdict) {
+                Verdict.GOOD -> "✓"
+                Verdict.FAIR -> "≈"
+                Verdict.BAD -> "✗"
+            }
+            symbol.setTextColor(color)
+
             val headline = view.findViewById<TextView>(R.id.popupHeadline)
-            headline.text = analysis.headline
+            headline.text = when (analysis.verdict) {
+                Verdict.GOOD -> "CONVIENE"
+                Verdict.FAIR -> "REGULAR"
+                Verdict.BAD -> "NO CONVIENE"
+            }
             headline.setTextColor(color)
 
-            // Numero estrella: ganancia por hora, en grande y a color.
-            val hero = view.findViewById<TextView>(R.id.popupHero)
-            hero.text = whole(analysis.perHour) + "/h"
-            hero.setTextColor(color)
-
-            // Contexto minimo: tarifa, km del viaje y por km.
-            view.findViewById<TextView>(R.id.popupSub).text = buildString {
-                append(money(offer.fare)).append(" · ")
-                append(km(offer.tripKm)).append(" km · ")
-                append(money(analysis.perKm)).append("/km")
-            }
+            // Contexto minimo: solo la tarifa, para saber de cual carrera se trata.
+            view.findViewById<TextView>(R.id.popupSub).text =
+                money(offer.fare) + " · " + km(offer.tripKm) + " km"
 
             // inDrive se negocia: mostramos cuanto pedir en grande.
             val negoView = view.findViewById<TextView>(R.id.popupNegotiate)
