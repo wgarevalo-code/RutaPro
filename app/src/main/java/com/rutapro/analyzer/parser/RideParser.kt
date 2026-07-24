@@ -41,8 +41,9 @@ object RideParser {
         "(oportunidad|promoci|adicionales|al completar|solicitudes de|premio|racha|" +
             "cuponera|ganancias|historial|semana pasada|resumen|billetera|saldo|retirar|" +
             "calificaci|incentivo|desaf|" +
-            "rutapro|panel de control|filtros inteligentes|reiniciar contadores|" +
-            "analizando|la tomaste|no conviene|conviene|mínimo que te conviene)",
+            // el propio RutaPro (panel), NO las palabras de su popup (para no
+            // bloquear una carrera real que quede detras del popup):
+            "panel de control|filtros inteligentes|reiniciar contadores)",
         RegexOption.IGNORE_CASE
     )
 
