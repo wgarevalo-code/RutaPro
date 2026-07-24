@@ -31,6 +31,8 @@ object RideParser {
         RegexOption.IGNORE_CASE
     )
     private val TILDE_DIST = Regex("""~\s*(\d{1,3}(?:[.,]\d)?)\s*(km|mi)""", RegexOption.IGNORE_CASE)
+    // Cualquier distancia suelta, como ultimo recurso.
+    private val PLAIN_DIST = Regex("""(\d{1,3}(?:[.,]\d)?)\s*(km|mi)\b""", RegexOption.IGNORE_CASE)
 
     private val INDRIVE_SIG = Regex("""(ofrece tu tarifa|solicitud de viaje|aceptar por)""", RegexOption.IGNORE_CASE)
     private val TRIP_HINT = Regex("""viaje""", RegexOption.IGNORE_CASE)
@@ -68,27 +70,41 @@ object RideParser {
             ?: firstDecimalMoney(raw) ?: return null
 
         val segs = segments(raw)
-        val pickupHint = TILDE_DIST.find(raw)?.let { toKm(it.groupValues[1], it.groupValues[2]) }
+        val tilde = TILDE_DIST.find(raw)?.let { toKm(it.groupValues[1], it.groupValues[2]) }
 
         var pickupKm = 0.0; var pickupMin = 0.0
         var tripKm = 0.0; var tripMin = 0.0
 
-        if (pickupHint != null && segs.isNotEmpty()) {
-            // La recogida es el segmento cuya distancia coincide con el "~X km".
-            val pSeg = segs.minByOrNull { abs(it.km - pickupHint) }
-            pickupKm = pickupHint
-            pickupMin = if (pSeg != null && abs(pSeg.km - pickupHint) < 0.6) pSeg.min else 0.0
-            // El viaje es el OTRO segmento (el verde). No se asume que sea el mayor.
-            val tSeg = segs.filter { it !== pSeg }.maxByOrNull { it.pos }
-                ?: segs.firstOrNull { abs(it.km - pickupHint) >= 0.6 }
-            if (tSeg != null) { tripKm = tSeg.km; tripMin = tSeg.min }
-        } else if (segs.size >= 2) {
-            // Sin "~": por orden, primero recogida (A) y luego viaje (B).
-            val sorted = segs.sortedBy { it.pos }
-            pickupKm = sorted[0].km; pickupMin = sorted[0].min
-            tripKm = sorted[1].km; tripMin = sorted[1].min
-        } else if (segs.size == 1) {
-            tripKm = segs[0].km; tripMin = segs[0].min
+        when {
+            // Caso ideal: se leen los dos cuadros del mapa (recogida azul + viaje verde).
+            segs.size >= 2 -> {
+                val pSeg = if (tilde != null) segs.minByOrNull { abs(it.km - tilde) }
+                           else segs.minByOrNull { it.pos }
+                val others = segs.filter { it !== pSeg }
+                val tSeg = others.maxByOrNull { it.km } ?: pSeg
+                pickupKm = tilde ?: (pSeg?.km ?: 0.0)
+                pickupMin = pSeg?.min ?: 0.0
+                tripKm = tSeg?.km ?: 0.0
+                tripMin = tSeg?.min ?: 0.0
+            }
+            // Se leyo un solo cuadro con tiempo+distancia.
+            segs.size == 1 -> {
+                val s = segs[0]
+                if (tilde != null && abs(tilde - s.km) > 0.5) {
+                    // Tenemos dos distancias distintas: la menor es recogida, la mayor viaje.
+                    pickupKm = minOf(tilde, s.km)
+                    tripKm = maxOf(tilde, s.km)
+                    tripMin = s.min
+                } else {
+                    tripKm = s.km; tripMin = s.min
+                }
+            }
+            // Solo la tarjeta (accesibilidad de inDrive): usamos la distancia que haya.
+            tilde != null -> tripKm = tilde
+            else -> {
+                val d = PLAIN_DIST.find(raw)?.let { toKm(it.groupValues[1], it.groupValues[2]) }
+                if (d != null) tripKm = d
+            }
         }
 
         if (tripKm <= 0.0) return null
